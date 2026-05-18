@@ -1,11 +1,24 @@
 # CMake build
 build/
+build-win/
+
+# Cross-compilation Qt5 libraries
+qt5-win/
+
+# Release archives
+release/
+
+# aqtinstall log
+aqtinstall.log
 
 # IDE
 *.pro.user
 *.autosave
 .vscode/
 .idea/
+*.swp
+*~
 
 # System
 .DS_Store
+Thumbs.db
