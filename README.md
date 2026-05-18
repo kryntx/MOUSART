@@ -2,7 +2,7 @@
 ## 现代串口调试工具 | Modern Serial Port Debugger
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Linux-blue)](https://www.linux.org/)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
 [![Toolchain](https://img.shields.io/badge/toolchain-Qt5%20%7C%20CMake-green)](https://www.qt.io/)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue)](https://isocpp.org/)
 
@@ -12,7 +12,7 @@
 
 ## 核心特性
 
-### 虚拟串口支持
+### 虚拟串口支持（仅 Linux）
 - 一键创建虚拟串口对，无需额外安装复杂工具
 - 基于 `socat` 实现，稳定可靠
 - 自动发现多实例创建的虚拟串口
@@ -67,7 +67,15 @@
 ## 快速开始
 
 ### 预构建版本
-目前项目尚未发布预构建版本，请从源码编译使用。
+
+从 [GitHub Releases](https://github.com/kryntx/MOUSART/releases) 下载对应平台的预构建版本：
+
+| 平台 | 下载文件 | 大小 |
+|------|---------|------|
+| **Linux x86_64** | `MOUSART-v1.0.0-linux-x86_64.tar.gz` | ~40KB |
+| **Windows x86_64** | `MOUSART-v1.0.0-windows-x86_64.zip` | ~19MB |
+
+> Windows 版本已包含所有运行时依赖（Qt5 DLL），解压即可运行。硬件串口调试功能完全可用，虚拟串口功能暂仅支持 Linux。
 
 ### 从源码构建
 
@@ -75,29 +83,45 @@
 - Qt 5 (Core, Gui, Qml, Quick, Widgets, SerialPort)
 - CMake >= 3.16
 - C++17 兼容编译器
-- socat (仅虚拟串口功能需要)
+- socat (仅 Linux 虚拟串口功能需要)
 
-#### Ubuntu/Debian 依赖安装
+#### Linux 构建
+
 ```bash
+# Ubuntu/Debian 依赖安装
 sudo apt update
 sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
-```
 
-#### 编译步骤
-```bash
 # 克隆仓库
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
 
-# 创建构建目录并编译
-cmake -B build
+# 编译
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
-# 运行程序
+# 运行（如遇串口权限问题，使用 sudo 或将用户添加到 dialout 组）
 ./build/MOUSART
+```
 
-# 如遇串口权限问题，使用sudo运行
-sudo ./build/MOUSART
+#### Windows 交叉编译（Linux → Windows）
+
+```bash
+# 安装 MinGW-w64
+sudo apt install mingw-w64
+
+# 下载 Qt5 Windows MinGW 预编译库（需要 Python 3）
+pip3 install aqtinstall
+aqt install-qt windows desktop 5.15.2 win64_mingw81 -O qt5-win
+
+# 交叉编译
+cmake -B build-win \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake \
+  -DCMAKE_PREFIX_PATH=qt5-win/5.15.2/mingw81_64 \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build-win
+
+# 运行时需将 Qt5 DLL 和 qml/ 目录放到 MOUSART.exe 同级目录
 ```
 
 ---
@@ -157,6 +181,8 @@ sudo ./build/MOUSART
 MOUSART/
 ├── CMakeLists.txt          # CMake 构建配置
 ├── qml.qrc                 # QML 资源文件
+├── cmake/                  # CMake 工具链配置
+│   └── mingw-w64-toolchain.cmake  # MinGW-w64 交叉编译工具链
 ├── img/                    # 项目截图和图片资源
 │   └── d1.png              # 主界面截图
 ├── src/                    # C++ 源代码
