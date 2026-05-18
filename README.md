@@ -1,31 +1,36 @@
-# MOUSART 🖥️
+# MOUSART
 ## 现代串口调试工具 | Modern Serial Port Debugger
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-blue)](https://www.linux.org/)
+[![Toolchain](https://img.shields.io/badge/toolchain-Qt5%20%7C%20CMake-green)](https://www.qt.io/)
+[![C++](https://img.shields.io/badge/C%2B%2B-17-blue)](https://isocpp.org/)
 
 **MOUSART** 是一款基于 Qt5/QML 构建的现代化串口调试工具，专为嵌入式开发、硬件调试和串口通信场景设计。它不仅支持传统的硬件串口调试，还集成了强大的虚拟串口功能，让您在没有实际硬件的情况下也能进行串口通信测试。
 
 ---
 
-## ✨ 核心特性
+## 核心特性
 
-### 🎯 虚拟串口支持
+### 虚拟串口支持
 - 一键创建虚拟串口对，无需额外安装复杂工具
 - 基于 `socat` 实现，稳定可靠
 - 自动发现多实例创建的虚拟串口
 - 外部程序可通过 `/tmp/mousart_vport` 连接
 - 支持多实例间直接通信
 
-### 🔧 专业串口调试
+### 专业串口调试
 - 完整的串口参数配置：波特率、数据位、停止位、校验位、流控制
 - 波特率支持 1200-921600 预设值及 1-9999999 自定义值
 - 独立的接收日志区和发送输入区
 - 支持实时数据监控和历史记录查看
 
-### 💻 十六进制模式
+### 十六进制模式
 - 一键切换接收数据的十六进制/ASCII显示
 - 支持十六进制格式数据发送
 - 自动解析十六进制字符串，支持空格分隔
 
-### 🎨 现代化界面
+### 现代化界面
 - 内置深色/浅色双主题，平滑切换
 - 主题和设置自动持久化保存
 - 0.8x-1.5x 连续字体缩放
@@ -34,18 +39,22 @@
 
 ---
 
-## 📸 截图
+## 截图
 
-### 虚拟串口模式（深色主题）
-![虚拟串口模式](screenshots/v1.png)
-
-### 硬件串口调试模式（深色主题）
-![硬件串口调试模式](screenshots/d1.png)
-
+<div align="center">
+  <img src="img/d1.png" width="800" alt="MOUSART 串口调试界面">
+  <br>
+  <em>MOUSART 串口调试界面（深色主题）</em>
+</div>
+<div align="center">
+  <img src="img/d1.png" width="800" alt="MOUSART 虚拟串口界面">
+  <br>
+  <em>MOUSART 虚拟串口界面（深色主题）</em>
+</div>
 
 ---
 
-## 🚀 快速开始
+## 快速开始
 
 ### 预构建版本
 目前项目尚未发布预构建版本，请从源码编译使用。
@@ -83,7 +92,7 @@ sudo ./build/MOUSART
 
 ---
 
-## 📖 使用指南
+## 使用指南
 
 ### 虚拟串口模式
 1. 在左侧面板切换到 **"模拟串口 Virtual"** 模式
@@ -112,7 +121,7 @@ sudo ./build/MOUSART
 
 ---
 
-## ⚙️ 串口参数配置
+## 串口参数配置
 
 | 参数 | 可选值 |
 |------|--------|
@@ -124,12 +133,14 @@ sudo ./build/MOUSART
 
 ---
 
-## 📁 项目结构
+## 项目结构
 
 ```
 MOUSART/
 ├── CMakeLists.txt          # CMake 构建配置
 ├── qml.qrc                 # QML 资源文件
+├── img/                    # 项目截图和图片资源
+│   └── d1.png              # 主界面截图
 ├── src/                    # C++ 源代码
 │   ├── main.cpp            # 程序入口点
 │   └── core/               # 核心功能模块
@@ -153,7 +164,24 @@ MOUSART/
 
 ---
 
-## 🤝 贡献指南
+## 常见问题
+
+### Q: 为什么我无法打开串口？
+A: 这通常是权限问题。尝试使用 `sudo ./build/MOUSART` 运行程序，或者将当前用户添加到 `dialout` 组：
+```bash
+sudo usermod -aG dialout $USER
+```
+注销并重新登录后生效。
+
+### Q: 虚拟串口功能无法使用？
+A: 请确保已安装 `socat` 工具。在 Ubuntu/Debian 上可以通过以下命令安装：
+```bash
+sudo apt install socat
+```
+
+---
+
+## 贡献指南
 
 欢迎提交 Issue 和 Pull Request 来帮助改进这个项目！
 
@@ -165,18 +193,15 @@ MOUSART/
 
 ---
 
-## 📄 许可证
+## 许可证
 
 本项目采用 **MIT 许可证** 开源 - 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-## 📞 支持与反馈
+## 支持与反馈
 
 如果您在使用过程中遇到任何问题或有改进建议，请通过以下方式联系我们：
 - 提交 [GitHub Issue](https://github.com/kryntx/MOUSART/issues)
-- 发送邮件至项目维护者
-
----
 
 **MOUSART** - 让串口调试更简单、更高效！
