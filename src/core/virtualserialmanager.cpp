@@ -1,9 +1,12 @@
 #include "virtualserialmanager.h"
 #include <QRegularExpression>
+#include <QFile>
 #include <QDebug>
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+static const char* VPORT_SYMLINK = "/tmp/mousart_vport";
 
 VirtualSerialManager::VirtualSerialManager(QObject *parent)
     : QObject(parent)
@@ -32,7 +35,7 @@ bool VirtualSerialManager::startVirtualPort()
     m_socat.start("socat", QStringList()
                      << "-d" << "-d"
                      << "pty,raw,echo=0"
-                     << "pty,raw,echo=0");
+                     << QString("pty,raw,echo=0,link=%1").arg(VPORT_SYMLINK));
 
     if (!m_socat.waitForStarted(3000)) {
         m_waitingForPorts = false;
@@ -68,6 +71,7 @@ void VirtualSerialManager::stopVirtualPort()
 
     m_ptyA.clear();
     m_ptyB.clear();
+    QFile::remove(VPORT_SYMLINK);
     emit isActiveChanged();
     emit externalPortChanged();
 }
@@ -174,6 +178,7 @@ void VirtualSerialManager::onSocatFinished(int exitCode, QProcess::ExitStatus st
     m_ptyA.clear();
     m_ptyB.clear();
     m_waitingForPorts = false;
+    QFile::remove(VPORT_SYMLINK);
     emit isActiveChanged();
     emit externalPortChanged();
 }

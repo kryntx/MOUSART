@@ -16,7 +16,7 @@ public:
     ~VirtualSerialManager();
 
     bool isActive() const { return m_fd >= 0; }
-    QString externalPort() const { return m_ptyB; }
+    QString externalPort() const { return "/tmp/mousart_vport"; }
 
     Q_INVOKABLE bool startVirtualPort();
     Q_INVOKABLE void stopVirtualPort();

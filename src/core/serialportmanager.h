@@ -30,8 +30,6 @@ public:
     Q_INVOKABLE void closePort();
     Q_INVOKABLE qint64 sendData(const QString &data, bool hexMode);
     Q_INVOKABLE QString getErrorString() const;
-    Q_INVOKABLE void setExternalVirtualPort(const QString &path);
-    Q_INVOKABLE void clearExternalVirtualPort();
 
 signals:
     void isOpenChanged();
@@ -51,7 +49,6 @@ private:
     QStringList m_ports;
     QTimer m_refreshTimer;
     bool m_filterSystemTty = true;
-    QString m_externalVirtualPort;
 };
 
 #endif // SERIALPORTMANAGER_H

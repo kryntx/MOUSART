@@ -1,6 +1,7 @@
 #include "serialportmanager.h"
 #include <QDebug>
 #include <QDir>
+#include <QFileInfo>
 
 SerialPortManager::SerialPortManager(QObject *parent)
     : QObject(parent)
@@ -38,9 +39,11 @@ void SerialPortManager::refreshPorts()
         newPorts.append(displayName);
     }
 
-    // Add external virtual port (B-side, for other programs to connect)
-    if (!m_externalVirtualPort.isEmpty()) {
-        QString vpName = m_externalVirtualPort + " [virtual]";
+    // Detect virtual port symlink created by any MOUSART instance
+    static const char* VPORT_SYMLINK = "/tmp/mousart_vport";
+    QFileInfo vlink(VPORT_SYMLINK);
+    if (vlink.isSymLink()) {
+        QString vpName = QString(VPORT_SYMLINK) + " [virtual]";
         if (!newPorts.contains(vpName))
             newPorts.append(vpName);
     }
@@ -56,19 +59,6 @@ void SerialPortManager::setFilterSystemTty(bool filter)
     if (m_filterSystemTty == filter) return;
     m_filterSystemTty = filter;
     emit filterSystemTtyChanged();
-    refreshPorts();
-}
-
-void SerialPortManager::setExternalVirtualPort(const QString &path)
-{
-    m_externalVirtualPort = path;
-    qWarning() << "[MOUSART] External virtual port registered:" << path;
-    refreshPorts();
-}
-
-void SerialPortManager::clearExternalVirtualPort()
-{
-    m_externalVirtualPort.clear();
     refreshPorts();
 }
 

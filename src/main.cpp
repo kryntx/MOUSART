@@ -16,15 +16,6 @@ int main(int argc, char *argv[])
     SerialPortManager serialManager;
     VirtualSerialManager virtualManager;
 
-    // Register B-side virtual port in serial port list when virtual port starts
-    QObject::connect(&virtualManager, &VirtualSerialManager::isActiveChanged, [&]() {
-        if (virtualManager.isActive()) {
-            serialManager.setExternalVirtualPort(virtualManager.externalPort());
-        } else {
-            serialManager.clearExternalVirtualPort();
-        }
-    });
-
     QQmlApplicationEngine engine;
     engine.addImportPath("qrc:/qml");
     engine.rootContext()->setContextProperty("themeManager", &themeManager);
