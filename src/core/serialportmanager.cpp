@@ -16,6 +16,9 @@ SerialPortManager::SerialPortManager(QObject *parent)
     refreshPorts();
     connect(&m_refreshTimer, &QTimer::timeout, this, &SerialPortManager::refreshPorts);
     m_refreshTimer.start(2000);
+
+    m_timedSendTimer.setTimerType(Qt::PreciseTimer);
+    connect(&m_timedSendTimer, &QTimer::timeout, this, &SerialPortManager::onTimedSendTick);
 }
 
 SerialPortManager::~SerialPortManager()
@@ -100,6 +103,7 @@ bool SerialPortManager::openPort(const QString &name, int baudRate, int dataBits
 
 void SerialPortManager::closePort()
 {
+    stopTimedSend();
     if (m_port.isOpen()) {
         m_port.close();
         emit isOpenChanged();
@@ -133,6 +137,36 @@ qint64 SerialPortManager::sendData(const QString &data, bool hexMode)
 QString SerialPortManager::getErrorString() const
 {
     return m_port.errorString();
+}
+
+void SerialPortManager::startTimedSend(const QString &data, bool hexMode, int intervalMs)
+{
+    if (!m_port.isOpen()) {
+        emit errorOccurred(tr("Port not open"));
+        return;
+    }
+    m_timedSendData = data;
+    m_timedSendHexMode = hexMode;
+    m_timedSendTimer.setInterval(qMax(intervalMs, 1));
+    m_timedSendTimer.start();
+    emit timedSendActiveChanged();
+}
+
+void SerialPortManager::stopTimedSend()
+{
+    m_timedSendTimer.stop();
+    emit timedSendActiveChanged();
+}
+
+void SerialPortManager::onTimedSendTick()
+{
+    if (!m_port.isOpen()) {
+        stopTimedSend();
+        return;
+    }
+    qint64 result = sendData(m_timedSendData, m_timedSendHexMode);
+    if (result > 0)
+        emit timedSendCompleted(m_timedSendData);
 }
 
 void SerialPortManager::onReadyRead()

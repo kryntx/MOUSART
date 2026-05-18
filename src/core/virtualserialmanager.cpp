@@ -15,6 +15,9 @@ VirtualSerialManager::VirtualSerialManager(QObject *parent)
     connect(&m_socat, &QProcess::readyReadStandardError, this, &VirtualSerialManager::onSocatOutput);
     connect(&m_socat, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &VirtualSerialManager::onSocatFinished);
+
+    m_timedSendTimer.setTimerType(Qt::PreciseTimer);
+    connect(&m_timedSendTimer, &QTimer::timeout, this, &VirtualSerialManager::onTimedSendTick);
 }
 
 VirtualSerialManager::~VirtualSerialManager()
@@ -49,6 +52,7 @@ bool VirtualSerialManager::startVirtualPort()
 void VirtualSerialManager::stopVirtualPort()
 {
     m_waitingForPorts = false;
+    stopTimedSend();
 
     if (m_readNotifier) {
         m_readNotifier->setEnabled(false);
@@ -96,6 +100,36 @@ qint64 VirtualSerialManager::sendData(const QString &data, bool hexMode)
         emit errorOccurred(QString::fromLocal8Bit(strerror(errno)));
     }
     return written;
+}
+
+void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int intervalMs)
+{
+    if (m_fd < 0) {
+        emit errorOccurred(tr("虚拟串口未打开"));
+        return;
+    }
+    m_timedSendData = data;
+    m_timedSendHexMode = hexMode;
+    m_timedSendTimer.setInterval(qMax(intervalMs, 1));
+    m_timedSendTimer.start();
+    emit timedSendActiveChanged();
+}
+
+void VirtualSerialManager::stopTimedSend()
+{
+    m_timedSendTimer.stop();
+    emit timedSendActiveChanged();
+}
+
+void VirtualSerialManager::onTimedSendTick()
+{
+    if (m_fd < 0) {
+        stopTimedSend();
+        return;
+    }
+    qint64 result = sendData(m_timedSendData, m_timedSendHexMode);
+    if (result > 0)
+        emit timedSendCompleted(m_timedSendData);
 }
 
 void VirtualSerialManager::onSocatOutput()

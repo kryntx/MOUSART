@@ -10,7 +10,24 @@ Rectangle {
     property real receiveHeight: height * 0.6
     property bool hexDisplay: false
     property bool hexSend: false
+    property bool showTimestamp: true
     property int currentMode: settingsPanel.mode
+    property int timedSendInterval: 1000
+
+    function doSend() {
+        var area = currentMode === 0 ? virtualSendArea : debugSendArea
+        if (area.text.length === 0) return false
+        var result
+        if (currentMode === 0)
+            result = virtualManager.sendData(area.text, dataPanel.hexSend)
+        else
+            result = serialManager.sendData(area.text, dataPanel.hexSend)
+        if (result > 0) {
+            dataPanel.addLogEntry("TX", area.text)
+            return true
+        }
+        return false
+    }
 
     function addLogEntry(type, data, toModel) {
         var model = toModel || (currentMode === 0 ? virtualLogModel : debugLogModel)
@@ -46,6 +63,9 @@ Rectangle {
         function onErrorOccurred(error) {
             dataPanel.addLogEntry("ERR", error, debugLogModel)
         }
+        function onTimedSendCompleted(data) {
+            dataPanel.addLogEntry("TX", data, debugLogModel)
+        }
     }
 
     Connections {
@@ -62,6 +82,9 @@ Rectangle {
             } else {
                 dataPanel.addLogEntry("INFO", "虚拟串口已关闭", virtualLogModel)
             }
+        }
+        function onTimedSendCompleted(data) {
+            dataPanel.addLogEntry("TX", data, virtualLogModel)
         }
     }
 
@@ -109,6 +132,12 @@ Rectangle {
                         onClicked: dataPanel.hexDisplay = !dataPanel.hexDisplay
                     }
 
+                    SmallToggle {
+                        label: qsTr("时间")
+                        active: dataPanel.showTimestamp
+                        onClicked: dataPanel.showTimestamp = !dataPanel.showTimestamp
+                    }
+
                     SmallButton {
                         label: qsTr("清空")
                         onClicked: {
@@ -143,6 +172,7 @@ Rectangle {
                             spacing: 6
 
                             Text {
+                                visible: dataPanel.showTimestamp
                                 text: model.logTime
                                 color: themeManager.textSecondary
                                 font.pixelSize: 11 * rootWindow.scaleFactor
@@ -182,7 +212,7 @@ Rectangle {
                                 color: themeManager.textPrimary
                                 font.pixelSize: 11 * rootWindow.scaleFactor
                                 font.family: "monospace"
-                                width: logRow.parent.width - 120
+                                width: logRow.parent.width - (dataPanel.showTimestamp ? 120 : 36)
                                 wrapMode: Text.Wrap
                             }
                         }
@@ -264,6 +294,75 @@ Rectangle {
                         onClicked: dataPanel.hexSend = !dataPanel.hexSend
                     }
 
+                    Rectangle {
+                        width: 72 * rootWindow.scaleFactor
+                        height: 20 * rootWindow.scaleFactor
+                        radius: 10
+                        color: themeManager.bgTertiary
+                        border.color: timedSendInput.activeFocus ? themeManager.accent : "transparent"
+                        border.width: 1
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 2
+                            spacing: 0
+
+                            TextInput {
+                                id: timedSendInput
+                                width: parent.width - msLabel.width - parent.spacing
+                                height: parent.height
+                                verticalAlignment: TextInput.AlignVCenter
+                                text: dataPanel.timedSendInterval.toString()
+                                color: themeManager.textPrimary
+                                font.pixelSize: 9 * rootWindow.scaleFactor
+                                font.family: "monospace"
+                                validator: IntValidator { bottom: 1; top: 3600000 }
+                                inputMethodHints: Qt.ImhDigitsOnly
+                                onEditingFinished: {
+                                    var val = parseInt(text)
+                                    if (!isNaN(val) && val >= 1)
+                                        dataPanel.timedSendInterval = val
+                                    else
+                                        text = dataPanel.timedSendInterval.toString()
+                                }
+                            }
+
+                            Text {
+                                id: msLabel
+                                height: parent.height
+                                verticalAlignment: Text.AlignVCenter
+                                text: "ms"
+                                color: themeManager.textSecondary
+                                font.pixelSize: 9 * rootWindow.scaleFactor
+                            }
+                        }
+                    }
+
+                    SmallToggle {
+                        label: qsTr("定时")
+                        active: currentMode === 0 ? virtualManager.timedSendActive : serialManager.timedSendActive
+                        onClicked: {
+                            if (currentMode === 0) {
+                                if (!virtualManager.timedSendActive && virtualManager.isActive) {
+                                    var area = virtualSendArea
+                                    if (area.text.length > 0)
+                                        virtualManager.startTimedSend(area.text, dataPanel.hexSend, dataPanel.timedSendInterval)
+                                } else {
+                                    virtualManager.stopTimedSend()
+                                }
+                            } else {
+                                if (!serialManager.timedSendActive && serialManager.isOpen) {
+                                    var area2 = debugSendArea
+                                    if (area2.text.length > 0)
+                                        serialManager.startTimedSend(area2.text, dataPanel.hexSend, dataPanel.timedSendInterval)
+                                } else {
+                                    serialManager.stopTimedSend()
+                                }
+                            }
+                        }
+                    }
+
                     SmallButton {
                         label: qsTr("发送")
                         accent: true
@@ -271,16 +370,7 @@ Rectangle {
                             return (currentMode === 0 && virtualManager.isActive) ||
                                    (currentMode === 1 && serialManager.isOpen)
                         }
-                        onClicked: {
-                            var area = currentMode === 0 ? virtualSendArea : debugSendArea
-                            if (area.text.length === 0) return
-                            var result
-                            if (currentMode === 0)
-                                result = virtualManager.sendData(area.text, dataPanel.hexSend)
-                            else
-                                result = serialManager.sendData(area.text, dataPanel.hexSend)
-                            if (result > 0) dataPanel.addLogEntry("TX", area.text)
-                        }
+                        onClicked: dataPanel.doSend()
                     }
 
                     Item { width: 2 }
@@ -304,10 +394,8 @@ Rectangle {
 
                         Keys.onReturnPressed: {
                             if (event.modifiers & Qt.ControlModifier) {
-                                if (text.length > 0 && virtualManager.isActive) {
-                                    var result = virtualManager.sendData(text, dataPanel.hexSend)
-                                    if (result > 0) dataPanel.addLogEntry("TX", text)
-                                }
+                                if (text.length > 0 && virtualManager.isActive)
+                                    dataPanel.doSend()
                                 event.accepted = true
                             } else {
                                 event.accepted = false
@@ -334,10 +422,8 @@ Rectangle {
 
                         Keys.onReturnPressed: {
                             if (event.modifiers & Qt.ControlModifier) {
-                                if (text.length > 0 && serialManager.isOpen) {
-                                    var result = serialManager.sendData(text, dataPanel.hexSend)
-                                    if (result > 0) dataPanel.addLogEntry("TX", text)
-                                }
+                                if (text.length > 0 && serialManager.isOpen)
+                                    dataPanel.doSend()
                                 event.accepted = true
                             } else {
                                 event.accepted = false
