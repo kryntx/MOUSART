@@ -2,9 +2,14 @@
 #define VIRTUALSERIALMANAGER_H
 
 #include <QObject>
+#include <QTimer>
+
+#ifdef Q_OS_WIN
+#include <QSerialPort>
+#else
 #include <QProcess>
 #include <QSocketNotifier>
-#include <QTimer>
+#endif
 
 class VirtualSerialManager : public QObject
 {
@@ -17,8 +22,22 @@ public:
     explicit VirtualSerialManager(QObject *parent = nullptr);
     ~VirtualSerialManager();
 
-    bool isActive() const { return m_fd >= 0; }
-    QString externalPort() const { return "/tmp/mousart_vport"; }
+    bool isActive() const
+    {
+#ifdef Q_OS_WIN
+        return m_winPort && m_winPort->isOpen();
+#else
+        return m_fd >= 0;
+#endif
+    }
+    QString externalPort() const
+    {
+#ifdef Q_OS_WIN
+        return tr("虚拟串口在 Windows 上暂不可用");
+#else
+        return "/tmp/mousart_vport";
+#endif
+    }
     bool timedSendActive() const { return m_timedSendTimer.isActive(); }
 
     Q_INVOKABLE bool startVirtualPort();
@@ -36,12 +55,15 @@ signals:
     void timedSendCompleted(const QString &data);
 
 private slots:
+    void onTimedSendTick();
+#ifndef Q_OS_WIN
     void onSocatOutput();
     void onSocatFinished(int exitCode, QProcess::ExitStatus status);
     void onFdReadyRead(int fd);
-    void onTimedSendTick();
+#endif
 
 private:
+#ifndef Q_OS_WIN
     void openSideA();
 
     QProcess m_socat;
@@ -50,6 +72,9 @@ private:
     QString m_ptyA;
     QString m_ptyB;
     bool m_waitingForPorts = false;
+#else
+    QSerialPort *m_winPort = nullptr;
+#endif
     QTimer m_timedSendTimer;
     QString m_timedSendData;
     bool m_timedSendHexMode = false;

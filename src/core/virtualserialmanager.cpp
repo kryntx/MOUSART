@@ -1,20 +1,28 @@
 #include "virtualserialmanager.h"
-#include <QRegularExpression>
 #include <QFile>
 #include <QDebug>
+
+#ifdef Q_OS_WIN
+#include <QSerialPortInfo>
+#else
+#include <QRegularExpression>
+#include <QProcess>
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 static const char* VPORT_SYMLINK = "/tmp/mousart_vport";
+#endif
 
 VirtualSerialManager::VirtualSerialManager(QObject *parent)
     : QObject(parent)
 {
+#ifndef Q_OS_WIN
     connect(&m_socat, &QProcess::readyReadStandardOutput, this, &VirtualSerialManager::onSocatOutput);
     connect(&m_socat, &QProcess::readyReadStandardError, this, &VirtualSerialManager::onSocatOutput);
     connect(&m_socat, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &VirtualSerialManager::onSocatFinished);
+#endif
 
     m_timedSendTimer.setTimerType(Qt::PreciseTimer);
     connect(&m_timedSendTimer, &QTimer::timeout, this, &VirtualSerialManager::onTimedSendTick);
@@ -27,6 +35,10 @@ VirtualSerialManager::~VirtualSerialManager()
 
 bool VirtualSerialManager::startVirtualPort()
 {
+#ifdef Q_OS_WIN
+    emit errorOccurred(tr("虚拟串口功能在 Windows 上暂不可用，请使用硬件串口调试模式。"));
+    return false;
+#else
     if (m_socat.state() == QProcess::Running) {
         stopVirtualPort();
     }
@@ -47,12 +59,23 @@ bool VirtualSerialManager::startVirtualPort()
     }
 
     return true;
+#endif
 }
 
 void VirtualSerialManager::stopVirtualPort()
 {
-    m_waitingForPorts = false;
     stopTimedSend();
+
+#ifdef Q_OS_WIN
+    if (m_winPort) {
+        m_winPort->close();
+        delete m_winPort;
+        m_winPort = nullptr;
+        emit isActiveChanged();
+        emit externalPortChanged();
+    }
+#else
+    m_waitingForPorts = false;
 
     if (m_readNotifier) {
         m_readNotifier->setEnabled(false);
@@ -78,10 +101,31 @@ void VirtualSerialManager::stopVirtualPort()
     QFile::remove(VPORT_SYMLINK);
     emit isActiveChanged();
     emit externalPortChanged();
+#endif
 }
 
 qint64 VirtualSerialManager::sendData(const QString &data, bool hexMode)
 {
+#ifdef Q_OS_WIN
+    if (!m_winPort || !m_winPort->isOpen()) {
+        emit errorOccurred(tr("虚拟串口未打开"));
+        return -1;
+    }
+
+    QByteArray bytes;
+    if (hexMode) {
+        QString hex = QString(data).remove(' ').remove('\n').remove('\r');
+        bytes = QByteArray::fromHex(hex.toUtf8());
+    } else {
+        bytes = data.toUtf8();
+    }
+
+    qint64 written = m_winPort->write(bytes);
+    if (written == -1) {
+        emit errorOccurred(m_winPort->errorString());
+    }
+    return written;
+#else
     if (m_fd < 0) {
         emit errorOccurred(tr("虚拟串口未打开"));
         return -1;
@@ -100,11 +144,12 @@ qint64 VirtualSerialManager::sendData(const QString &data, bool hexMode)
         emit errorOccurred(QString::fromLocal8Bit(strerror(errno)));
     }
     return written;
+#endif
 }
 
 void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int intervalMs)
 {
-    if (m_fd < 0) {
+    if (!isActive()) {
         emit errorOccurred(tr("虚拟串口未打开"));
         return;
     }
@@ -123,7 +168,7 @@ void VirtualSerialManager::stopTimedSend()
 
 void VirtualSerialManager::onTimedSendTick()
 {
-    if (m_fd < 0) {
+    if (!isActive()) {
         stopTimedSend();
         return;
     }
@@ -132,6 +177,7 @@ void VirtualSerialManager::onTimedSendTick()
         emit timedSendCompleted(m_timedSendData);
 }
 
+#ifndef Q_OS_WIN
 void VirtualSerialManager::onSocatOutput()
 {
     QByteArray output = m_socat.readAllStandardOutput() + m_socat.readAllStandardError();
@@ -227,3 +273,4 @@ void VirtualSerialManager::onFdReadyRead(int fd)
         emit dataReceived(text, data);
     }
 }
+#endif // !Q_OS_WIN
