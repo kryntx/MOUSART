@@ -1,102 +1,142 @@
-# MOUSART
+# MOUSART 🖥️
+## 现代串口调试工具 | Modern Serial Port Debugger
 
-A modern serial port debugging tool with virtual serial port support, built with Qt5/QML.
+**MOUSART** 是一款基于 Qt5/QML 构建的现代化串口调试工具，专为嵌入式开发、硬件调试和串口通信场景设计。它不仅支持传统的硬件串口调试，还集成了强大的虚拟串口功能，让您在没有实际硬件的情况下也能进行串口通信测试。
 
-## Features
+---
 
-**Virtual Serial Port** — Create a virtual serial port pair using socat. MOUSART acts as one end while external programs connect to the other end at `/tmp/mousart_vport`. Multiple MOUSART instances can discover each other's virtual ports automatically.
+## ✨ 核心特性
 
-**Serial Debug** — Connect to real hardware serial ports with full parameter configuration. Independently receive and send data with dedicated log and input areas per mode.
+### 🎯 虚拟串口支持
+- 一键创建虚拟串口对，无需额外安装复杂工具
+- 基于 `socat` 实现，稳定可靠
+- 自动发现多实例创建的虚拟串口
+- 外部程序可通过 `/tmp/mousart_vport` 连接
+- 支持多实例间直接通信
 
-**HEX Mode** — Toggle HEX display for received data and HEX send for transmitted data. HEX strings are parsed with `QByteArray::fromHex()`.
+### 🔧 专业串口调试
+- 完整的串口参数配置：波特率、数据位、停止位、校验位、流控制
+- 波特率支持 1200-921600 预设值及 1-9999999 自定义值
+- 独立的接收日志区和发送输入区
+- 支持实时数据监控和历史记录查看
 
-**Dark / Light Theme** — Two built-in themes with smooth switching. Settings persist across sessions.
+### 💻 十六进制模式
+- 一键切换接收数据的十六进制/ASCII显示
+- 支持十六进制格式数据发送
+- 自动解析十六进制字符串，支持空格分隔
 
-**Font Scaling** — Continuous zoom from 0.8x to 1.5x via the title bar slider.
+### 🎨 现代化界面
+- 内置深色/浅色双主题，平滑切换
+- 主题和设置自动持久化保存
+- 0.8x-1.5x 连续字体缩放
+- 自定义无边框窗口，支持拖拽移动、双击最大化和边缘调整大小
+- 精心设计的控件和视觉效果
 
-**Custom Frameless Window** — Drag to move, double-click to maximize, edge and corner resize handles, Canvas-drawn window control buttons.
+---
 
-## Screenshot
+## 📸 截图
 
-<!-- Add screenshot here -->
+*(此处可添加项目截图)*
 
-## Requirements
+---
 
+## 🚀 快速开始
+
+### 预构建版本
+目前项目尚未发布预构建版本，请从源码编译使用。
+
+### 从源码构建
+
+#### 系统要求
 - Qt 5 (Core, Gui, Qml, Quick, Widgets, SerialPort)
 - CMake >= 3.16
-- C++17 compiler
-- socat (for virtual serial port feature)
+- C++17 兼容编译器
+- socat (仅虚拟串口功能需要)
 
-### Install dependencies (Ubuntu/Debian)
-
+#### Ubuntu/Debian 依赖安装
 ```bash
+sudo apt update
 sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
 ```
 
-## Build
-
+#### 编译步骤
 ```bash
+# 克隆仓库
+git clone https://github.com/kryntx/MOUSART.git
+cd MOUSART
+
+# 创建构建目录并编译
 cmake -B build
 cmake --build build
-```
 
-## Run
-
-```bash
+# 运行程序
 ./build/MOUSART
-# or with sudo if serial port permissions are needed
+
+# 如遇串口权限问题，使用sudo运行
 sudo ./build/MOUSART
 ```
 
-## Usage
+---
 
-### Virtual Serial Port Mode
+## 📖 使用指南
 
-1. Switch to "模拟串口 Virtual" mode in the left panel
-2. Click "启动 Start" to create the virtual port
-3. The external port path `/tmp/mousart_vport` is displayed — connect to it from any serial tool
-4. Data sent from the external program appears in the receive area; data typed in the send area goes to the external program
-5. Click "停止 Stop" to tear down
+### 虚拟串口模式
+1. 在左侧面板切换到 **"模拟串口 Virtual"** 模式
+2. 点击 **"启动 Start"** 按钮创建虚拟串口
+3. 界面将显示外部端口路径 `/tmp/mousart_vport`
+4. 使用任意串口工具连接到此路径
+5. 外部程序发送的数据将显示在接收区
+6. 在发送区输入数据并点击 **"发送 Send"** 或按 `Ctrl+Enter`
+7. 点击 **"停止 Stop"** 关闭虚拟串口
 
-### Serial Debug Mode
+### 硬件串口调试模式
+1. 在左侧面板切换到 **"串口调试 Debug"** 模式
+2. 从下拉列表中选择要连接的串口
+3. 配置串口参数：波特率、数据位、停止位、校验位、流控制
+4. 点击 **"打开 Open"** 建立连接
+5. 在发送区输入数据并发送
+6. 接收区将实时显示接收到的数据
+7. 点击 **"关闭 Close"** 断开连接
 
-1. Switch to "串口调试 Debug" mode
-2. Select a port, configure baud rate / data bits / stop bits / parity / flow control
-3. Click "打开 Open" to connect
-4. Type in the send area and press **Ctrl+Enter** or click "发送 Send"
+### 多实例通信
+1. 打开两个 MOUSART 窗口
+2. 在第一个窗口中启动虚拟串口
+3. 第二个窗口将自动在串口列表中发现 `/tmp/mousart_vport`
+4. 在第二个窗口中选择此虚拟串口并打开
+5. 两个窗口之间即可互相发送和接收数据
 
-### Multi-instance
+---
 
-Open two MOUSART windows. Start the virtual port in window 1 — window 2 will automatically detect `/tmp/mousart_vport` in its port list and can connect to it in debug mode.
+## ⚙️ 串口参数配置
 
-## Serial Port Parameters
+| 参数 | 可选值 |
+|------|--------|
+| **波特率** | 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600<br>或自定义值 (1 - 9999999) |
+| **数据位** | 5, 6, 7, 8 |
+| **停止位** | 1, 1.5, 2 |
+| **校验位** | None, Odd, Even, Mark, Space |
+| **流控制** | None, Hardware (RTS/CTS), Software (XON/XOFF) |
 
-| Setting       | Options                                                       |
-| ------------- | ------------------------------------------------------------- |
-| Baud Rate     | 1200 – 921600 (preset list) or custom value (1 – 9999999)    |
-| Data Bits     | 5, 6, 7, 8                                                   |
-| Stop Bits     | 1, 1.5, 2                                                    |
-| Parity        | None, Odd, Even, Mark, Space                                 |
-| Flow Control  | None, Hardware, Software                                      |
+---
 
-## Project Structure
+## 📁 项目结构
 
 ```
 MOUSART/
-├── CMakeLists.txt
-├── qml.qrc
-├── src/
-│   ├── main.cpp                    # Entry point
-│   └── core/
-│       ├── thememanager.h/.cpp     # Theme and font scaling
-│       ├── serialportmanager.h/.cpp # Real serial port I/O
-│       └── virtualserialmanager.h/.cpp # Virtual serial port via socat
-└── qml/
-    ├── main.qml                    # Root frameless window
-    ├── TitleBar.qml                # Title bar with theme/font controls
-    ├── SettingsPanel.qml           # Left sidebar: mode + port config
-    ├── DataPanel.qml               # Right area: log display + send input
-    └── components/                 # Reusable QML components
+├── CMakeLists.txt          # CMake 构建配置
+├── qml.qrc                 # QML 资源文件
+├── src/                    # C++ 源代码
+│   ├── main.cpp            # 程序入口点
+│   └── core/               # 核心功能模块
+│       ├── thememanager.h/.cpp     # 主题和字体缩放管理
+│       ├── serialportmanager.h/.cpp # 硬件串口I/O管理
+│       └── virtualserialmanager.h/.cpp # 虚拟串口管理(基于socat)
+└── qml/                    # QML 界面代码
+    ├── main.qml            # 主窗口(无边框)
+    ├── TitleBar.qml        # 标题栏(主题/字体控制)
+    ├── SettingsPanel.qml   # 左侧设置面板(模式+串口配置)
+    ├── DataPanel.qml       # 右侧数据面板(日志+发送)
+    └── components/         # 可复用QML组件
         ├── WindowButton.qml
         ├── ModeButton.qml
         ├── ActionButton.qml
@@ -106,6 +146,32 @@ MOUSART/
         └── SmallToggle.qml
 ```
 
-## License
+---
 
-<!-- Add license here -->
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request 来帮助改进这个项目！
+
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
+
+---
+
+## 📄 许可证
+
+本项目采用 **MIT 许可证** 开源 - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 📞 支持与反馈
+
+如果您在使用过程中遇到任何问题或有改进建议，请通过以下方式联系我们：
+- 提交 [GitHub Issue](https://github.com/kryntx/MOUSART/issues)
+- 发送邮件至项目维护者
+
+---
+
+**MOUSART** - 让串口调试更简单、更高效！
