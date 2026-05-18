@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/TitleBar.qml</file>
+        <file>qml/SettingsPanel.qml</file>
+        <file>qml/DataPanel.qml</file>
+        <file>qml/components/WindowButton.qml</file>
+        <file>qml/components/ModeButton.qml</file>
+        <file>qml/components/ActionButton.qml</file>
+        <file>qml/components/StyledComboBox.qml</file>
+        <file>qml/components/EditableComboBox.qml</file>
+        <file>qml/components/SmallToggle.qml</file>
+        <file>qml/components/SmallButton.qml</file>
+    </qresource>
+</RCC>

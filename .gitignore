@@ -1,0 +1,11 @@
+# CMake build
+build/
+
+# IDE
+*.pro.user
+*.autosave
+.vscode/
+.idea/
+
+# System
+.DS_Store
