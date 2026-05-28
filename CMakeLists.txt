@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(MOUSART VERSION 1.0.0 LANGUAGES CXX)
+project(MOUSART VERSION 2.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,12 +12,18 @@ set(SOURCES
     src/core/thememanager.cpp
     src/core/serialportmanager.cpp
     src/core/virtualserialmanager.cpp
+    src/core/configmanager.cpp
+    src/core/dataanalyzer.cpp
+    src/core/logfilemanager.cpp
 )
 
 set(HEADERS
     src/core/thememanager.h
     src/core/serialportmanager.h
     src/core/virtualserialmanager.h
+    src/core/configmanager.h
+    src/core/dataanalyzer.h
+    src/core/logfilemanager.h
 )
 
 qt5_add_resources(QRC_RESOURCES qml.qrc)

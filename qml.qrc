@@ -11,5 +11,9 @@
         <file>qml/components/EditableComboBox.qml</file>
         <file>qml/components/SmallToggle.qml</file>
         <file>qml/components/SmallButton.qml</file>
+        <file>qml/components/DataStatsBar.qml</file>
+        <file>qml/components/QuickCommandBar.qml</file>
+        <file>qml/components/PinControlBar.qml</file>
+        <file>qml/components/AutoReplyPanel.qml</file>
     </qresource>
 </RCC>

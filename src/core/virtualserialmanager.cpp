@@ -1,6 +1,7 @@
 #include "virtualserialmanager.h"
 #include <QFile>
 #include <QDebug>
+#include <QTextCodec>
 
 #ifdef Q_OS_WIN
 #include <QSerialPortInfo>
@@ -26,6 +27,17 @@ VirtualSerialManager::VirtualSerialManager(QObject *parent)
 
     m_timedSendTimer.setTimerType(Qt::PreciseTimer);
     connect(&m_timedSendTimer, &QTimer::timeout, this, &VirtualSerialManager::onTimedSendTick);
+
+    // Stats timer
+    m_statsTimer.start();
+    m_statsUpdateTimer.setInterval(1000);
+    connect(&m_statsUpdateTimer, &QTimer::timeout, this, [this]() {
+        m_rxBytesSnapshot = m_rxBytes;
+        m_txBytesSnapshot = m_txBytes;
+        m_statsTimer.restart();
+        emit statsChanged();
+    });
+    m_statsUpdateTimer.start();
 }
 
 VirtualSerialManager::~VirtualSerialManager()
@@ -117,12 +129,18 @@ qint64 VirtualSerialManager::sendData(const QString &data, bool hexMode)
         QString hex = QString(data).remove(' ').remove('\n').remove('\r');
         bytes = QByteArray::fromHex(hex.toUtf8());
     } else {
-        bytes = data.toUtf8();
+        QString text = data;
+        if (m_newlineCr) text += "\r";
+        if (m_newlineLf) text += "\n";
+        bytes = text.toUtf8();
     }
 
     qint64 written = m_winPort->write(bytes);
     if (written == -1) {
         emit errorOccurred(m_winPort->errorString());
+    } else {
+        m_txBytes += written;
+        emit statsChanged();
     }
     return written;
 #else
@@ -136,18 +154,24 @@ qint64 VirtualSerialManager::sendData(const QString &data, bool hexMode)
         QString hex = QString(data).remove(' ').remove('\n').remove('\r');
         bytes = QByteArray::fromHex(hex.toUtf8());
     } else {
-        bytes = data.toUtf8();
+        QString text = data;
+        if (m_newlineCr) text += "\r";
+        if (m_newlineLf) text += "\n";
+        bytes = text.toUtf8();
     }
 
     qint64 written = ::write(m_fd, bytes.constData(), bytes.size());
     if (written == -1) {
         emit errorOccurred(QString::fromLocal8Bit(strerror(errno)));
+    } else {
+        m_txBytes += written;
+        emit statsChanged();
     }
     return written;
 #endif
 }
 
-void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int intervalMs)
+void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int intervalMs, int count)
 {
     if (!isActive()) {
         emit errorOccurred(tr("虚拟串口未打开"));
@@ -155,6 +179,8 @@ void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int
     }
     m_timedSendData = data;
     m_timedSendHexMode = hexMode;
+    m_timedSendCount = count;
+    m_timedSendSent = 0;
     m_timedSendTimer.setInterval(qMax(intervalMs, 1));
     m_timedSendTimer.start();
     emit timedSendActiveChanged();
@@ -163,6 +189,8 @@ void VirtualSerialManager::startTimedSend(const QString &data, bool hexMode, int
 void VirtualSerialManager::stopTimedSend()
 {
     m_timedSendTimer.stop();
+    m_timedSendSent = 0;
+    m_timedSendCount = -1;
     emit timedSendActiveChanged();
 }
 
@@ -173,8 +201,88 @@ void VirtualSerialManager::onTimedSendTick()
         return;
     }
     qint64 result = sendData(m_timedSendData, m_timedSendHexMode);
-    if (result > 0)
+    if (result > 0) {
+        m_timedSendSent++;
         emit timedSendCompleted(m_timedSendData);
+        if (m_timedSendCount > 0 && m_timedSendSent >= m_timedSendCount) {
+            stopTimedSend();
+        }
+    }
+}
+
+// Stats
+double VirtualSerialManager::rxRate() const
+{
+    qint64 elapsed = m_statsTimer.elapsed();
+    if (elapsed < 100) return 0.0;
+    return (double)(m_rxBytes - m_rxBytesSnapshot) * 1000.0 / elapsed;
+}
+
+double VirtualSerialManager::txRate() const
+{
+    qint64 elapsed = m_statsTimer.elapsed();
+    if (elapsed < 100) return 0.0;
+    return (double)(m_txBytes - m_txBytesSnapshot) * 1000.0 / elapsed;
+}
+
+void VirtualSerialManager::resetStats()
+{
+    m_rxBytes = 0;
+    m_txBytes = 0;
+    m_rxBytesSnapshot = 0;
+    m_txBytesSnapshot = 0;
+    m_statsTimer.restart();
+    emit statsChanged();
+}
+
+// Settings
+void VirtualSerialManager::setEchoEnabled(bool enabled)
+{
+    if (m_echoEnabled == enabled) return;
+    m_echoEnabled = enabled;
+    emit echoEnabledChanged();
+}
+
+void VirtualSerialManager::setNewlineCr(bool v)
+{
+    if (m_newlineCr == v) return;
+    m_newlineCr = v;
+    emit newlineChanged();
+}
+
+void VirtualSerialManager::setNewlineLf(bool v)
+{
+    if (m_newlineLf == v) return;
+    m_newlineLf = v;
+    emit newlineChanged();
+}
+
+void VirtualSerialManager::setReceiveEncoding(const QString &enc)
+{
+    if (m_receiveEncoding == enc) return;
+    m_receiveEncoding = enc;
+    emit receiveEncodingChanged();
+}
+
+QString VirtualSerialManager::decodeData(const QByteArray &data) const
+{
+    if (m_receiveEncoding == "UTF-8") {
+        return QString::fromUtf8(data);
+    } else if (m_receiveEncoding == "GBK" || m_receiveEncoding == "GB18030") {
+        QTextCodec *codec = QTextCodec::codecForName(m_receiveEncoding.toUtf8());
+        if (codec) return codec->toUnicode(data);
+        return QString::fromLocal8Bit(data);
+    } else if (m_receiveEncoding == "Latin-1") {
+        return QString::fromLatin1(data);
+    } else if (m_receiveEncoding == "ASCII") {
+        QString result;
+        for (char c : data) {
+            if (c >= 0x20 && c <= 0x7E) result += QChar(c);
+            else result += QString("\\x%1").arg((unsigned char)c, 2, 16, QChar('0'));
+        }
+        return result;
+    }
+    return QString::fromUtf8(data);
 }
 
 #ifndef Q_OS_WIN
@@ -185,7 +293,6 @@ void VirtualSerialManager::onSocatOutput()
 
     if (!m_waitingForPorts) return;
 
-    // Parse PTY paths: "N PTY is /dev/pts/X"
     QRegularExpression re(R"(PTY is (\S+))");
     QRegularExpressionMatchIterator it = re.globalMatch(text);
 
@@ -208,34 +315,30 @@ void VirtualSerialManager::onSocatOutput()
 
 void VirtualSerialManager::openSideA()
 {
-    // Open PTY slave with raw fd — bypass QSerialPort to avoid interference with socat
     m_fd = ::open(m_ptyA.toLocal8Bit().constData(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (m_fd < 0) {
         emit errorOccurred(tr("无法打开虚拟串口A端: ") + QString::fromLocal8Bit(strerror(errno)));
         return;
     }
 
-    // Configure raw mode
     struct termios tio;
     if (tcgetattr(m_fd, &tio) == 0) {
         cfmakeraw(&tio);
         tio.c_cc[VMIN] = 0;
         tio.c_cc[VTIME] = 1;
-        // Disable echo
         tio.c_lflag &= ~(ECHO | ECHONL | ECHOE | ICANON);
         tio.c_oflag &= ~(ONLCR | OCRNL);
         tcsetattr(m_fd, TCSANOW, &tio);
     }
 
-    // Set non-blocking
     int flags = fcntl(m_fd, F_GETFL, 0);
     if (flags >= 0) fcntl(m_fd, F_SETFL, flags & ~O_NONBLOCK);
 
-    // Use QSocketNotifier for async reads
     m_readNotifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
     connect(m_readNotifier, &QSocketNotifier::activated, this, &VirtualSerialManager::onFdReadyRead);
     m_readNotifier->setEnabled(true);
 
+    resetStats();
     qWarning() << "[MOUSART] Side A opened:" << m_ptyA;
     emit isActiveChanged();
     emit externalPortChanged();
@@ -269,7 +372,10 @@ void VirtualSerialManager::onFdReadyRead(int fd)
     ssize_t n = ::read(fd, buf, sizeof(buf));
     if (n > 0) {
         QByteArray data(buf, n);
-        QString text = QString::fromUtf8(data);
+        m_rxBytes += n;
+        emit statsChanged();
+
+        QString text = decodeData(data);
         emit dataReceived(text, data);
     }
 }
