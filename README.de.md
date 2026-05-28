@@ -77,7 +77,7 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART Debug-Oberfläche">
   <br>
-  <em>MOUSART Seriell-Debug-Oberfläche (Dunkles Thema)</em>
+  <em>MOUSART Seriell-Debug-Oberfläche (Helles Thema)</em>
 </div>
 
 ---

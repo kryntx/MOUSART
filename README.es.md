@@ -77,7 +77,7 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="Interfaz de depuración MOUSART">
   <br>
-  <em>Interfaz de depuración serie MOUSART (tema oscuro)</em>
+  <em>Interfaz de depuración serie MOUSART (tema claro)</em>
 </div>
 
 ---

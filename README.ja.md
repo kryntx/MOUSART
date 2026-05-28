@@ -77,7 +77,7 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART デバッグ画面">
   <br>
-  <em>MOUSART シリアルデバッグ画面（ダークテーマ）</em>
+  <em>MOUSART シリアルデバッグ画面（ライトテーマ）</em>
 </div>
 
 ---

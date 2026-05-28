@@ -84,12 +84,12 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART 串列偵錯介面">
   <br>
-  <em>MOUSART 串列偵錯介面（深色主題）</em>
+  <em>MOUSART 串列偵錯介面（淺色主題）</em>
 </div>
 <div align="center">
   <img src="img/v1.png" width="800" alt="MOUSART 虛擬串列埠介面">
   <br>
-  <em>MOUSART 虛擬串列埠介面（深色主題）</em>
+  <em>MOUSART 虛擬串列埠介面（淺色主題）</em>
 </div>
 
 ---

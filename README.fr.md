@@ -77,7 +77,7 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="Interface de débogage MOUSART">
   <br>
-  <em>Interface de débogage série MOUSART (thème sombre)</em>
+  <em>Interface de débogage série MOUSART (thème clair)</em>
 </div>
 
 ---

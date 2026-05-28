@@ -84,12 +84,12 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART 串口调试界面">
   <br>
-  <em>MOUSART 串口调试界面（深色主题）</em>
+  <em>MOUSART 串口调试界面（浅色主题）</em>
 </div>
 <div align="center">
   <img src="img/v1.png" width="800" alt="MOUSART 虚拟串口界面">
   <br>
-  <em>MOUSART 虚拟串口界面（深色主题）</em>
+  <em>MOUSART 虚拟串口界面（浅色主题）</em>
 </div>
 
 ---

@@ -77,7 +77,7 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART 디버그 인터페이스">
   <br>
-  <em>MOUSART 시리얼 디버그 인터페이스 (다크 테마)</em>
+  <em>MOUSART 시리얼 디버그 인터페이스 (라이트 테마)</em>
 </div>
 
 ---

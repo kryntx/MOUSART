@@ -92,12 +92,12 @@
 <div align="center">
   <img src="img/d1.png" width="800" alt="MOUSART Debug Interface">
   <br>
-  <em>MOUSART Serial Debug Interface (Dark Theme)</em>
+  <em>MOUSART Serial Debug Interface (Light Theme)</em>
 </div>
 <div align="center">
   <img src="img/v1.png" width="800" alt="MOUSART Virtual Port Interface">
   <br>
-  <em>MOUSART Virtual Port Interface (Dark Theme)</em>
+  <em>MOUSART Virtual Port Interface (Light Theme)</em>
 </div>
 
 ---
