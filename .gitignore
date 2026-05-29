@@ -1,12 +1,18 @@
 # CMake build
 build/
 build-win/
+obj-x86_64-linux-gnu/
 
 # Cross-compilation Qt5 libraries
 qt5-win/
 
-# Release archives
-release/
+# Debian build artifacts
+debian/mouserial/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/mouserial.debhelper.log
+debian/mouserial.substvars
 
 # aqtinstall log
 aqtinstall.log

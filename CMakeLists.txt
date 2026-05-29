@@ -48,3 +48,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# Install targets
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+install(FILES ${PROJECT_NAME}.desktop DESTINATION share/applications)
+install(FILES img/icon.png DESTINATION share/icons/hicolor/256x256/apps RENAME ${PROJECT_NAME}.png)

@@ -1,0 +1,13 @@
+mouserial (2.0.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Full-featured serial port debugging tool
+  - Multiple data display formats (ASCII, HEX, Decimal, Binary)
+  - Virtual serial port support (socat-based)
+  - Auto-reply functionality
+  - Data analysis (Modbus, checksums)
+  - Quick command bar
+  - Log export
+  - Dark/Light theme support
+
+ -- kryntx <kryntx@users.noreply.github.com>  Thu, 29 May 2026 00:00:00 +0000
