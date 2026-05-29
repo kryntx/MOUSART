@@ -1,5 +1,10 @@
-"""Right data area with receive log, send area, quick commands, and stats."""
-from mousart.qt_compat import *
+"""Right data area - two independent panels for Virtual Serial and Hardware Debug."""
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+                               QPlainTextEdit, QLineEdit, QMenu, QSplitter,
+                               QDialog, QFormLayout, QCheckBox, QDialogButtonBox,
+                               QStackedWidget)
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
+from PyQt6.QtGui import QAction, QTextCursor, QFont, QColor
 
 from mousart.ui.widgets.small_toggle import SmallToggle
 from mousart.ui.widgets.small_button import SmallButton
@@ -14,28 +19,23 @@ from datetime import datetime
 class LogEntry:
     """Single log entry."""
     __slots__ = ('time', 'log_type', 'data')
-
-    def __init__(self, time_str: str, log_type: str, data: str):
+    def __init__(self, time_str, log_type, data):
         self.time = time_str
         self.log_type = log_type
         self.data = data
 
 
-class DataPanel(QWidget):
-    """Right panel with receive log, send area, Modbus, quick commands, and stats."""
+class SinglePanel(QWidget):
+    """A single send/receive panel for one mode (virtual or debug)."""
 
-    def __init__(self, parent=None, theme_manager=None, serial_manager=None,
-                 virtual_manager=None, config_manager=None, data_analyzer=None,
-                 log_file_manager=None):
+    def __init__(self, parent=None, theme_manager=None, config_manager=None,
+                 data_analyzer=None, log_file_manager=None):
         super().__init__(parent)
         self._theme_manager = theme_manager
-        self._serial_manager = serial_manager
-        self._virtual_manager = virtual_manager
         self._config_manager = config_manager
         self._data_analyzer = data_analyzer
         self._log_file_manager = log_file_manager
 
-        self._mode = 0
         self._hex_display = False
         self._hex_send = False
         self._show_timestamp = True
@@ -46,32 +46,24 @@ class DataPanel(QWidget):
         self._filter_regex = False
         self._timed_send_interval = 1000
         self._show_modbus = False
-
-        self._virtual_log = []
-        self._debug_log = []
+        self._log_entries = []
+        self._manager = None  # Will be set to serial_manager or virtual_manager
 
         self._build_ui()
-        self._connect_signals()
 
-    def set_theme_manager(self, tm):
-        self._theme_manager = tm
-        self._update_all_styles()
-
-    def set_mode(self, mode: int):
-        self._mode = mode
-        self._mode_label.setText("模拟串口" if mode == 0 else "串口调试")
-        self._refresh_log_view()
+    def set_manager(self, manager):
+        """Set the serial manager (virtual or hardware) for this panel."""
+        self._manager = manager
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(0)
 
-        # Use a splitter for receive/send areas
-        splitter = QSplitter(Qt_Orientation_Vertical)
+        splitter = QSplitter(Qt.Orientation.Vertical)
         splitter.setChildrenCollapsible(False)
 
-        # --- Receive area ---
+        # === Receive area ===
         recv_widget = QWidget()
         recv_layout = QVBoxLayout(recv_widget)
         recv_layout.setContentsMargins(2, 2, 2, 2)
@@ -81,26 +73,22 @@ class DataPanel(QWidget):
         recv_toolbar = QHBoxLayout()
         recv_toolbar.setSpacing(3)
 
-        self._mode_label = QLabel("模拟串口")
-        self._mode_label.setStyleSheet("font-size: 10px; font-weight: bold; color: #8899aa; margin-left: 6px;")
-        recv_toolbar.addWidget(self._mode_label)
-
         self._hex_display_toggle = SmallToggle("HEX", theme_manager=self._theme_manager)
-        self._hex_display_toggle.toggled_custom.connect(self._toggle_hex_display)
+        self._hex_display_toggle.toggled_custom.connect(lambda v: setattr(self, '_hex_display', v))
         recv_toolbar.addWidget(self._hex_display_toggle)
 
         self._timestamp_toggle = SmallToggle("时间", theme_manager=self._theme_manager)
         self._timestamp_toggle.active = True
-        self._timestamp_toggle.toggled_custom.connect(self._toggle_timestamp)
+        self._timestamp_toggle.toggled_custom.connect(lambda v: setattr(self, '_show_timestamp', v))
         recv_toolbar.addWidget(self._timestamp_toggle)
 
         self._direction_toggle = SmallToggle("↕", theme_manager=self._theme_manager)
         self._direction_toggle.active = True
-        self._direction_toggle.toggled_custom.connect(self._toggle_direction)
+        self._direction_toggle.toggled_custom.connect(lambda v: setattr(self, '_show_direction', v))
         recv_toolbar.addWidget(self._direction_toggle)
 
         self._pause_toggle = SmallToggle("暂停", theme_manager=self._theme_manager)
-        self._pause_toggle.toggled_custom.connect(self._toggle_pause)
+        self._pause_toggle.toggled_custom.connect(lambda v: setattr(self, '_pause_display', v))
         recv_toolbar.addWidget(self._pause_toggle)
 
         sep = QWidget()
@@ -108,14 +96,12 @@ class DataPanel(QWidget):
         sep.setStyleSheet("background: #2a2a4a;")
         recv_toolbar.addWidget(sep)
 
-        # Search
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("搜索...")
         self._search_input.setFixedWidth(100)
         self._search_input.setFixedHeight(20)
         recv_toolbar.addWidget(self._search_input)
 
-        # Filter button
         self._filter_btn = SmallButton("过滤", theme_manager=self._theme_manager)
         self._filter_btn.clicked_custom.connect(self._show_filter_menu)
         recv_toolbar.addWidget(self._filter_btn)
@@ -147,7 +133,7 @@ class DataPanel(QWidget):
 
         splitter.addWidget(recv_widget)
 
-        # --- Send area ---
+        # === Send area ===
         send_widget = QWidget()
         send_layout = QVBoxLayout(send_widget)
         send_layout.setContentsMargins(2, 2, 2, 2)
@@ -162,11 +148,11 @@ class DataPanel(QWidget):
         send_toolbar.addWidget(send_label)
 
         self._hex_send_toggle = SmallToggle("HEX", theme_manager=self._theme_manager)
-        self._hex_send_toggle.toggled_custom.connect(self._toggle_hex_send)
+        self._hex_send_toggle.toggled_custom.connect(lambda v: setattr(self, '_hex_send', v))
         send_toolbar.addWidget(self._hex_send_toggle)
 
         self._echo_toggle = SmallToggle("回显", theme_manager=self._theme_manager)
-        self._echo_toggle.toggled_custom.connect(self._toggle_echo)
+        self._echo_toggle.toggled_custom.connect(lambda v: setattr(self, '_echo_enabled', v))
         send_toolbar.addWidget(self._echo_toggle)
 
         sep2 = QWidget()
@@ -174,7 +160,6 @@ class DataPanel(QWidget):
         sep2.setStyleSheet("background: #2a2a4a;")
         send_toolbar.addWidget(sep2)
 
-        # Timed send
         self._interval_input = QLineEdit("1000")
         self._interval_input.setFixedWidth(60)
         self._interval_input.setFixedHeight(20)
@@ -276,56 +261,22 @@ class DataPanel(QWidget):
 
         return widget
 
-    def _connect_signals(self):
-        if self._serial_manager:
-            self._serial_manager.data_received.connect(self._on_serial_data)
-            self._serial_manager.error_occurred.connect(
-                lambda e: self._add_log_entry("ERR", e, self._debug_log))
-            self._serial_manager.timed_send_completed.connect(
-                lambda d: self._on_timed_send_completed(d, self._debug_log))
-            self._serial_manager.port_opened.connect(
-                lambda n: self._add_log_entry("SYS", f"已连接: {n}", self._debug_log))
-            self._serial_manager.port_closed.connect(
-                lambda: self._add_log_entry("SYS", "已断开", self._debug_log))
-            self._serial_manager.is_open_changed.connect(self._update_send_btn)
-            self._serial_manager.stats_changed.connect(self._update_stats)
-
-        if self._virtual_manager:
-            self._virtual_manager.data_received.connect(self._on_virtual_data)
-            self._virtual_manager.error_occurred.connect(
-                lambda e: self._add_log_entry("ERR", e, self._virtual_log))
-            self._virtual_manager.is_active_changed.connect(
-                lambda: self._on_virtual_state(self._virtual_log))
-            self._virtual_manager.timed_send_completed.connect(
-                lambda d: self._on_timed_send_completed(d, self._virtual_log))
-            self._virtual_manager.stats_changed.connect(self._update_stats)
-
-        if self._config_manager:
-            self._config_manager.quick_commands_changed.connect(
-                self._quick_cmd_bar.refresh)
-
     def eventFilter(self, obj, event):
-        if obj == self._send_text and event.type() == QEvent_Type_KeyPress:
-            if event.key() == Qt_Key_Return and event.modifiers() & Qt_KeyboardModifier_ControlModifier:
+        if obj == self._send_text and event.type() == event.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Return and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self._do_send()
                 return True
         return super().eventFilter(obj, event)
 
-    def _add_log_entry(self, log_type: str, data: str, log_list: list):
+    def add_log_entry(self, log_type, data):
+        """Add a log entry to this panel."""
         ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         entry = LogEntry(ts, log_type, data)
-        log_list.append(entry)
+        self._log_entries.append(entry)
 
         if not self._pause_display:
-            # Color based on type
-            color_map = {
-                "RX": "#4ec9b0", "TX": "#569cd6", "ERR": "#f44747",
-                "INFO": "#dcdcaa", "SYS": "#9cdcfe"
-            }
-            direction_map = {
-                "RX": "<<", "TX": ">>", "ERR": "!!", "INFO": "i", "SYS": "#"
-            }
-
+            color_map = {"RX": "#4ec9b0", "TX": "#569cd6", "ERR": "#f44747", "INFO": "#dcdcaa", "SYS": "#9cdcfe"}
+            direction_map = {"RX": "<<", "TX": ">>", "ERR": "!!", "INFO": "i", "SYS": "#"}
             color = color_map.get(log_type, "#8899aa")
             direction = direction_map.get(log_type, "?")
 
@@ -337,8 +288,6 @@ class DataPanel(QWidget):
             parts.append(f'<span style="color:{color if log_type == "ERR" else "#e0e0e0"};">{data}</span>')
 
             self._log_view.appendHtml("  ".join(parts))
-
-            # Auto-scroll
             cursor = self._log_view.textCursor()
             cursor.movePosition(QTextCursor.MoveOperation.End)
             self._log_view.setTextCursor(cursor)
@@ -348,101 +297,75 @@ class DataPanel(QWidget):
             raw = data.encode("utf-8", errors="replace")
             self._log_file_manager.recordData(log_type, raw, data)
 
-    def _on_serial_data(self, text: str, raw: bytes):
+    def on_data_received(self, text, raw):
+        """Handle received data from serial manager."""
         display = bytes_to_hex(raw, " ") if self._hex_display else text
         if self._filter_text:
             if self._data_analyzer and not self._data_analyzer.matchFilter(display, self._filter_text, self._filter_regex):
                 return
-        self._add_log_entry("RX", display, self._debug_log)
+        self.add_log_entry("RX", display)
 
-    def _on_virtual_data(self, text: str, raw: bytes):
-        display = bytes_to_hex(raw, " ") if self._hex_display else text
-        if self._filter_text:
-            if self._data_analyzer and not self._data_analyzer.matchFilter(display, self._filter_text, self._filter_regex):
-                return
-        self._add_log_entry("RX", display, self._virtual_log)
+    def on_error(self, error):
+        self.add_log_entry("ERR", error)
 
-    def _on_virtual_state(self, log_list):
-        if self._virtual_manager and self._virtual_manager.isActive:
-            self._add_log_entry("INFO", f"虚拟串口已启动 {self._virtual_manager.externalPort}", log_list)
-        else:
-            self._add_log_entry("INFO", "虚拟串口已关闭", log_list)
+    def on_timed_send_completed(self, data):
+        if self._echo_enabled:
+            self.add_log_entry("TX", data)
+
+    def on_port_event(self, event_type, info=""):
+        if event_type == "opened":
+            self.add_log_entry("SYS", f"已连接: {info}")
+        elif event_type == "closed":
+            self.add_log_entry("SYS", "已断开")
+        elif event_type == "vstarted":
+            self.add_log_entry("INFO", f"虚拟串口已启动 {info}")
+        elif event_type == "vstopped":
+            self.add_log_entry("INFO", "虚拟串口已关闭")
         self._update_send_btn()
 
-    def _on_timed_send_completed(self, data, log_list):
-        if self._echo_enabled:
-            self._add_log_entry("TX", data, log_list)
+    def update_send_state(self, is_active):
+        """Update send button state."""
+        self._send_btn.set_btn_enabled(is_active)
 
     def _do_send(self):
+        if not self._manager:
+            return
         text = self._send_text.toPlainText()
         if not text:
             return
-        manager = self._virtual_manager if self._mode == 0 else self._serial_manager
-        if not manager:
-            return
-
-        is_active = manager.isActive if self._mode == 0 else manager.isOpen
+        is_active = self._manager.isOpen if hasattr(self._manager, 'isOpen') else self._manager.isActive
         if not is_active:
             return
-
-        result = manager.sendData(text, self._hex_send)
+        result = self._manager.sendData(text, self._hex_send)
         if result > 0 and self._echo_enabled:
             display = self._data_analyzer.textToHex(text) if self._hex_send else text
-            log_list = self._virtual_log if self._mode == 0 else self._debug_log
-            self._add_log_entry("TX", display, log_list)
+            self.add_log_entry("TX", display)
 
-    def _send_quick_command(self, data: str, hex_mode: bool):
-        manager = self._virtual_manager if self._mode == 0 else self._serial_manager
-        if not manager:
+    def _send_quick_command(self, data, hex_mode):
+        if not self._manager:
             return
-        is_active = manager.isActive if self._mode == 0 else manager.isOpen
+        is_active = self._manager.isOpen if hasattr(self._manager, 'isOpen') else self._manager.isActive
         if not is_active:
             return
-
-        manager.sendData(data, hex_mode)
+        self._manager.sendData(data, hex_mode)
         if self._echo_enabled:
             display = self._data_analyzer.textToHex(data) if hex_mode else data
-            log_list = self._virtual_log if self._mode == 0 else self._debug_log
-            self._add_log_entry("TX", display, log_list)
-
-    def _toggle_hex_display(self, v):
-        self._hex_display = v
-
-    def _toggle_hex_send(self, v):
-        self._hex_send = v
-
-    def _toggle_timestamp(self, v):
-        self._show_timestamp = v
-
-    def _toggle_direction(self, v):
-        self._show_direction = v
-
-    def _toggle_pause(self, v):
-        self._pause_display = v
-
-    def _toggle_echo(self, v):
-        self._echo_enabled = v
-
-    def _toggle_modbus(self, v):
-        self._show_modbus = v
-        self._modbus_widget.setVisible(v)
+            self.add_log_entry("TX", display)
 
     def _toggle_timed_send(self, v):
-        manager = self._virtual_manager if self._mode == 0 else self._serial_manager
-        if not manager:
+        if not self._manager:
             return
-
         if v:
-            is_active = manager.isActive if self._mode == 0 else manager.isOpen
+            is_active = self._manager.isOpen if hasattr(self._manager, 'isOpen') else self._manager.isActive
             text = self._send_text.toPlainText()
             if is_active and text:
                 try:
                     interval = int(self._interval_input.text())
                 except ValueError:
                     interval = 1000
-                manager.startTimedSend(text, self._hex_send, interval, -1)
+                self._manager.startTimedSend(text, self._hex_send, interval, -1)
         else:
-            manager.stopTimedSend()
+            self._manager.stopTimedSend()
 
     def _toggle_recording(self, v):
         if self._log_file_manager:
@@ -451,12 +374,16 @@ class DataPanel(QWidget):
             else:
                 self._log_file_manager.stopRecording()
 
+    def _toggle_modbus(self, v):
+        self._show_modbus = v
+        self._modbus_widget.setVisible(v)
+
     def _send_file(self):
-        if self._log_file_manager and self._serial_manager:
+        if self._log_file_manager and self._manager and hasattr(self._manager, 'sendFileData'):
             path = self._log_file_manager.getSendFilePath()
             if path:
-                result = self._serial_manager.sendFileData(path, self._hex_send)
-                self._add_log_entry("INFO", f"文件发送: {result}", self._debug_log)
+                result = self._manager.sendFileData(path, self._hex_send)
+                self.add_log_entry("INFO", f"文件发送: {result}")
 
     def _save_log(self):
         if not self._log_file_manager:
@@ -464,18 +391,14 @@ class DataPanel(QWidget):
         path = self._log_file_manager.getSaveLogPath()
         if not path:
             return
-        log_list = self._virtual_log if self._mode == 0 else self._debug_log
-        entries = [{"logTime": e.time, "logType": e.log_type, "logData": e.data} for e in log_list]
+        entries = [{"logTime": e.time, "logType": e.log_type, "logData": e.data} for e in self._log_entries]
         if path.endswith(".csv"):
             self._log_file_manager.exportToCsv(path, entries)
         else:
             self._log_file_manager.saveLogToFile(path, entries)
 
     def _clear_log(self):
-        if self._mode == 0:
-            self._virtual_log.clear()
-        else:
-            self._debug_log.clear()
+        self._log_entries.clear()
         self._log_view.clear()
 
     def _show_filter_menu(self):
@@ -485,7 +408,7 @@ class DataPanel(QWidget):
         menu.addAction("正则匹配...", lambda: self._set_filter(self._search_input.text(), True))
         menu.exec(self._filter_btn.mapToGlobal(self._filter_btn.rect().bottomLeft()))
 
-    def _set_filter(self, text: str, regex: bool):
+    def _set_filter(self, text, regex):
         self._filter_text = text
         self._filter_regex = regex
         if text:
@@ -513,121 +436,81 @@ class DataPanel(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("添加快捷命令")
         dialog.setMinimumWidth(300)
-
         layout = QFormLayout(dialog)
         name_input = QLineEdit()
-        name_input.setPlaceholderText("AT")
         data_input = QLineEdit()
-        data_input.setPlaceholderText("AT\\r\\n")
         hex_check = QCheckBox("HEX模式")
-
         layout.addRow("名称:", name_input)
         layout.addRow("数据:", data_input)
         layout.addRow(hex_check)
-
-        buttons = QDialogButtonBox(QDialogButtonBox_StandardButton_Ok | QDialogButtonBox_StandardButton_Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addRow(buttons)
-
-        if dialog.exec() == QDialog_DialogCode_Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             if name_input.text() and self._config_manager:
-                self._config_manager.addQuickCommand(
-                    name_input.text(), data_input.text(), hex_check.isChecked())
+                self._config_manager.addQuickCommand(name_input.text(), data_input.text(), hex_check.isChecked())
 
-    def _edit_quick_command(self, index: int):
+    def _edit_quick_command(self, index):
         if not self._config_manager or index < 0 or index >= len(self._config_manager.quick_commands):
             return
         cmd = self._config_manager.quick_commands[index]
-
         dialog = QDialog(self)
         dialog.setWindowTitle("编辑快捷命令")
         dialog.setMinimumWidth(300)
-
         layout = QFormLayout(dialog)
         name_input = QLineEdit(cmd.get("name", ""))
         data_input = QLineEdit(cmd.get("data", ""))
         hex_check = QCheckBox("HEX模式")
         hex_check.setChecked(cmd.get("hex", False))
-
         layout.addRow("名称:", name_input)
         layout.addRow("数据:", data_input)
         layout.addRow(hex_check)
-
-        buttons = QDialogButtonBox(QDialogButtonBox_StandardButton_Ok | QDialogButtonBox_StandardButton_Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addRow(buttons)
-
-        if dialog.exec() == QDialog_DialogCode_Accepted:
-            self._config_manager.updateQuickCommand(
-                index, name_input.text(), data_input.text(), hex_check.isChecked())
-
-    def _refresh_log_view(self):
-        self._log_view.clear()
-        log_list = self._virtual_log if self._mode == 0 else self._debug_log
-        for entry in log_list:
-            color_map = {
-                "RX": "#4ec9b0", "TX": "#569cd6", "ERR": "#f44747",
-                "INFO": "#dcdcaa", "SYS": "#9cdcfe"
-            }
-            direction_map = {"RX": "<<", "TX": ">>", "ERR": "!!", "INFO": "i", "SYS": "#"}
-            color = color_map.get(entry.log_type, "#8899aa")
-            direction = direction_map.get(entry.log_type, "?")
-            parts = []
-            if self._show_timestamp:
-                parts.append(f'<span style="color:#8899aa;">{entry.time}</span>')
-            if self._show_direction:
-                parts.append(f'<span style="color:{color};font-weight:bold;">{direction}</span>')
-            parts.append(f'<span style="color:{color if entry.log_type == "ERR" else "#e0e0e0"};">{entry.data}</span>')
-            self._log_view.appendHtml("  ".join(parts))
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self._config_manager.updateQuickCommand(index, name_input.text(), data_input.text(), hex_check.isChecked())
 
     def _update_send_btn(self):
-        if self._mode == 0:
-            active = self._virtual_manager.isActive if self._virtual_manager else False
-        else:
-            active = self._serial_manager.isOpen if self._serial_manager else False
-        self._send_btn.set_btn_enabled(active)
+        if self._manager:
+            is_active = self._manager.isOpen if hasattr(self._manager, 'isOpen') else self._manager.isActive
+            self._send_btn.set_btn_enabled(is_active)
 
-    def _update_stats(self):
-        if self._mode == 0:
-            mgr = self._virtual_manager
-        else:
-            mgr = self._serial_manager
-        if not mgr:
-            return
-        self._stats_bar.update_stats(
-            self._format_bytes(mgr.rxBytes),
-            self._format_bytes(mgr.txBytes),
-            self._format_rate(mgr.rxRate),
-            self._format_rate(mgr.txRate)
-        )
+    def update_stats(self):
+        if self._manager:
+            rx = self._manager.rxBytes
+            tx = self._manager.txBytes
+            rx_rate = self._manager.rxRate
+            tx_rate = self._manager.txRate
+            self._stats_bar.update_stats(
+                self._format_bytes(rx), self._format_bytes(tx),
+                self._format_rate(rx_rate), self._format_rate(tx_rate)
+            )
+
+    def refresh_quick_commands(self):
+        self._quick_cmd_bar.refresh()
 
     @staticmethod
-    def _format_bytes(b: int) -> str:
-        if b < 1024:
-            return f"{b} B"
-        if b < 1048576:
-            return f"{b / 1024:.1f} KB"
-        return f"{b / 1048576:.2f} MB"
+    def _format_bytes(b):
+        if b < 1024: return f"{b} B"
+        if b < 1048576: return f"{b/1024:.1f} KB"
+        return f"{b/1048576:.2f} MB"
 
     @staticmethod
-    def _format_rate(bps: float) -> str:
-        if bps < 1024:
-            return f"{bps:.0f} B/s"
-        if bps < 1048576:
-            return f"{bps / 1024:.1f} KB/s"
-        return f"{bps / 1048576:.2f} MB/s"
+    def _format_rate(bps):
+        if bps < 1024: return f"{bps:.0f} B/s"
+        if bps < 1048576: return f"{bps/1024:.1f} KB/s"
+        return f"{bps/1048576:.2f} MB/s"
 
-    def _update_all_styles(self):
-        if not self._theme_manager:
-            return
-        recv_bg = self._theme_manager.get_color_hex("receiveBg")
-        send_bg = self._theme_manager.get_color_hex("sendBg")
-        border = self._theme_manager.get_color_hex("border")
-        text = self._theme_manager.get_color_hex("textPrimary")
+    def apply_theme(self, theme_manager):
+        self._theme_manager = theme_manager
+        recv_bg = theme_manager.get_color_hex("receiveBg")
+        send_bg = theme_manager.get_color_hex("sendBg")
+        border = theme_manager.get_color_hex("border")
+        text = theme_manager.get_color_hex("textPrimary")
 
-        self.setStyleSheet(f"background: {self._theme_manager.get_color_hex('bgPrimary')};")
         self._log_view.setStyleSheet(f"""
             QPlainTextEdit {{
                 background: {recv_bg};
@@ -644,30 +527,99 @@ class DataPanel(QWidget):
                 border-radius: 6px;
             }}
         """)
-        self._search_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: {self._theme_manager.get_color_hex('bgTertiary')};
-                color: {text};
-                border: 1px solid {border};
-                border-radius: 10px;
-                padding: 2px 6px;
-                font-size: 9px;
-            }}
-        """)
-        self._interval_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: {self._theme_manager.get_color_hex('bgTertiary')};
-                color: {text};
-                border: 1px solid {border};
-                border-radius: 10px;
-                padding: 2px 6px;
-                font-size: 9px;
-                font-family: monospace;
-            }}
-        """)
-        self._modbus_widget.setStyleSheet(f"background: {self._theme_manager.get_color_hex('bgTertiary')};")
-
         for toggle in self.findChildren(SmallToggle):
-            toggle.set_theme_manager(self._theme_manager)
+            toggle.set_theme_manager(theme_manager)
         for btn in self.findChildren(SmallButton):
-            btn.set_theme_manager(self._theme_manager)
+            btn.set_theme_manager(theme_manager)
+
+
+class DataPanel(QWidget):
+    """Right panel with two independent panels: Virtual Serial and Hardware Debug."""
+
+    def __init__(self, parent=None, theme_manager=None, serial_manager=None,
+                 virtual_manager=None, config_manager=None, data_analyzer=None,
+                 log_file_manager=None):
+        super().__init__(parent)
+        self._theme_manager = theme_manager
+        self._serial_manager = serial_manager
+        self._virtual_manager = virtual_manager
+        self._config_manager = config_manager
+        self._data_analyzer = data_analyzer
+        self._log_file_manager = log_file_manager
+
+        self._build_ui()
+        self._connect_signals()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Stacked widget to switch between two independent panels
+        self._stack = QStackedWidget()
+
+        # Panel 0: Virtual Serial
+        self._virtual_panel = SinglePanel(
+            theme_manager=self._theme_manager,
+            config_manager=self._config_manager,
+            data_analyzer=self._data_analyzer,
+            log_file_manager=self._log_file_manager
+        )
+        self._virtual_panel.set_manager(self._virtual_manager)
+
+        # Panel 1: Hardware Debug
+        self._debug_panel = SinglePanel(
+            theme_manager=self._theme_manager,
+            config_manager=self._config_manager,
+            data_analyzer=self._data_analyzer,
+            log_file_manager=self._log_file_manager
+        )
+        self._debug_panel.set_manager(self._serial_manager)
+
+        self._stack.addWidget(self._virtual_panel)  # index 0
+        self._stack.addWidget(self._debug_panel)     # index 1
+
+        layout.addWidget(self._stack)
+
+    def set_mode(self, mode):
+        """Switch between virtual (0) and debug (1) panels."""
+        self._stack.setCurrentIndex(mode)
+
+    def _connect_signals(self):
+        # Virtual manager signals
+        if self._virtual_manager:
+            self._virtual_manager.data_received.connect(self._virtual_panel.on_data_received)
+            self._virtual_manager.error_occurred.connect(self._virtual_panel.on_error)
+            self._virtual_manager.is_active_changed.connect(
+                lambda: self._virtual_panel.on_port_event(
+                    "vstarted" if self._virtual_manager.isActive else "vstopped",
+                    self._virtual_manager.externalPort if self._virtual_manager.isActive else ""
+                ))
+            self._virtual_manager.timed_send_completed.connect(self._virtual_panel.on_timed_send_completed)
+            self._virtual_manager.stats_changed.connect(self._virtual_panel.update_stats)
+
+        # Serial manager signals
+        if self._serial_manager:
+            self._serial_manager.data_received.connect(self._debug_panel.on_data_received)
+            self._serial_manager.error_occurred.connect(self._debug_panel.on_error)
+            self._serial_manager.port_opened.connect(
+                lambda n: self._debug_panel.on_port_event("opened", n))
+            self._serial_manager.port_closed.connect(
+                lambda: self._debug_panel.on_port_event("closed"))
+            self._serial_manager.is_open_changed.connect(
+                lambda: self._debug_panel.update_send_state(
+                    self._serial_manager.isOpen if self._serial_manager else False
+                ))
+            self._serial_manager.timed_send_completed.connect(self._debug_panel.on_timed_send_completed)
+            self._serial_manager.stats_changed.connect(self._debug_panel.update_stats)
+
+        # Config manager signals
+        if self._config_manager:
+            self._config_manager.quick_commands_changed.connect(self._virtual_panel.refresh_quick_commands)
+            self._config_manager.quick_commands_changed.connect(self._debug_panel.refresh_quick_commands)
+
+    def set_theme_manager(self, tm):
+        self._theme_manager = tm
+        self.setStyleSheet(f"background: {tm.get_color_hex('bgPrimary')};")
+        self._virtual_panel.apply_theme(tm)
+        self._debug_panel.apply_theme(tm)
