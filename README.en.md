@@ -10,288 +10,247 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
 [![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
-[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://riverbankcomputing.com/software/pyqt/)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 
-**MOUSART** is a full-featured serial port debugging tool built with Python/PyQt6, designed for embedded development, hardware debugging, and serial communication. Version 3.0 is a complete rewrite in Python, migrated from C++/Qt5/QML. All v2.0 features preserved: auto-reply, Modbus protocol support, quick commands, data recording & export, pin control, multi-encoding support, and dozens of professional features.
+**MOUSART** is a full-featured serial port debugging tool designed for embedded development, hardware debugging, and serial communication. It supports two independent modes: Serial Debug and Virtual Serial Port, with features including auto-reply, Modbus protocol support, quick commands, data recording & export, pin control, and multi-encoding support.
 
 ---
 
-## Feature Overview
+## Screenshots
 
-### 1. Connection Management
+### Serial Debug Mode
+
+<div align="center">
+  <img src="img/d1.png" width="800" alt="MOUSART Serial Debug Interface">
+  <br>
+  <em>Serial Debug Mode - Connect to real hardware serial ports</em>
+</div>
+
+### Virtual Serial Port Mode
+
+<div align="center">
+  <img src="img/v1.png" width="800" alt="MOUSART Virtual Serial Port Interface">
+  <br>
+  <em>Virtual Serial Port Mode - Create virtual port pairs for external programs</em>
+</div>
+
+---
+
+## Features
+
+### Serial Debug Mode
 - Auto-refresh available port list (2s polling)
-- Virtual serial port, USB-to-serial, Bluetooth serial support
+- USB-to-serial, Bluetooth serial support
 - Baud rate: 300 ~ 921600 presets + custom (1-9999999)
-- Data bits: 5, 6, 7, 8
-- Stop bits: 1, 1.5, 2
+- Data bits: 5, 6, 7, 8 / Stop bits: 1, 1.5, 2
 - Parity: None, Even, Odd, Mark, Space
 - Flow control: None / Hardware (RTS/CTS) / Software (XON/XOFF)
 - DTR/RTS manual control
 - CTS/DSR/DCD/RI pin state monitoring
-- Connection status indicator
+- Auto-reply (keyword match + delay config)
 
-### 2. Data Reception
-- Text mode (UTF-8 / GBK / GB18030 / Latin-1 / ASCII encoding)
-- Hexadecimal (HEX) display mode
-- Timestamp display (millisecond precision hh:mm:ss.zzz)
-- Direction indicator (`<<` RX / `>>` TX / `!!` ERR)
-- Pause display (background still receives)
-- Keyword filter (plain text / regex)
-- Search function
-- Log limit: 2000 entries with auto-scroll
+### Virtual Serial Port Mode (Linux only)
+- One-click virtual port pair creation via `socat`
+- External programs connect via `/tmp/mousart_vport`
+- Independent send/receive area and statistics
 
-### 3. Data Transmission
+### Data Send/Receive
 - Text / HEX send mode toggle
+- Multi-encoding: UTF-8, GBK, GB18030, Latin-1, ASCII
 - Newline control (CR / LF independent toggle)
-- Timed auto-send (1ms ~ 3600000ms, with count limit)
-- File send (send any file's raw content)
-- Send echo control
+- Timed auto-send (1ms ~ 3600000ms)
+- File send
 - Modbus RTU frame builder (auto CRC)
-- Quick command bar (add/edit/delete, left-click send, right-click edit, persistent)
-- Send sequence/queue (sequential send with loop support)
+- Quick command bar (left-click send, right-click edit)
 - Ctrl+Enter shortcut
 
-### 4. Auto-Reply
-- Auto-respond when specific keyword is received
-- Configurable reply delay (ms)
-- One-click enable/disable
-- Rules persist across sessions
-
-### 5. Encoding & Conversion Tools
-- Text <-> Hex conversion
-- Multi-encoding: UTF-8, GBK, GB18030, Latin-1, ASCII
-- Special character escape/unescape (`\r\n`, `\x00`, etc.)
+### Data Analysis
 - Checksum: Sum8 / XOR8 / CRC16-Modbus / CRC32
-- Modbus RTU frame builder & parser
-- Binary / Decimal / Hex number conversion
+- Binary / Decimal / Hex conversion
+- Text <-> Hex conversion
+- Keyword / Regex filtering
 
-### 6. Data Recording & Export
+### Data Recording
 - One-click save log to TXT / CSV
-- Auto-recording with file rotation (10MB/file)
-- Real-time RX/TX byte counter and rate display (B/s, KB/s, MB/s)
-- Full send/receive log with timestamps and direction
+- Auto-recording (10MB/file auto-split)
+- Real-time RX/TX byte counter and rate display
 
-### 7. Virtual Serial Port (Linux only)
-- One-click virtual port pair creation via `socat`
-- Auto-detect virtual ports from other MOUSART instances
-- External programs connect via `/tmp/mousart_vport`
-- Independent RX/TX stats and encoding settings
-
-### 8. UI & Configuration
-- Dark / Light theme with smooth switching
-- 0.8x-1.5x continuous font scaling
-- Custom frameless window (drag, double-click maximize, edge resize)
-- Profile management: save/load/switch multiple configurations
-- Serial params, quick commands, auto-reply rules persist with profiles
+### UI
+- Dark/Light theme
+- 0.8x-1.5x font scaling
+- Profile management
 
 ---
 
-## Quick Start
+## Installation
 
-### Pre-built Releases
+### Linux (Debian/Ubuntu)
 
-Download from [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
+#### Method 1: deb package (Recommended)
 
-| Platform | File | Size |
-|----------|------|------|
-| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
-| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
-
-#### Debian/Ubuntu Install (Recommended)
 ```bash
-# Download and install deb package (dependencies handled automatically)
+# 1. Download deb package
 wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+
+# 2. Install (dependencies installed automatically)
 sudo apt install ./mouserial_3.0.0-1_amd64.deb
+
+# 3. Run
+mousart
 ```
 
-> Windows version: Single exe, double-click to run. Hardware serial debug fully functional; virtual serial port is Linux-only.
-
-### Build from Source
+#### Method 2: Run from source
 
 ```bash
-# Ubuntu/Debian dependencies
+# 1. Install system dependencies
 sudo apt update
-sudo apt install python3-pyqt6 python3-serial socat
+sudo apt install python3-pyqt5 python3-serial socat git
 
-# Clone and run
+# 2. Clone project
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-pip3 install PyQt6 pyserial
+
+# 3. Run
 python3 -m mousart
 ```
 
-#### Build Windows EXE
+#### Method 3: Install with pip
+
 ```bash
-pip3 install pyinstaller
-pyinstaller pyinstaller.spec --noconfirm
-# Output: dist/MOUSART.exe
+# 1. Install system dependencies
+sudo apt install socat
+
+# 2. Install Python dependencies
+pip3 install PyQt5 pyserial
+
+# 3. Clone and run
+git clone https://github.com/kryntx/MOUSART.git
+cd MOUSART
+python3 -m mousart
 ```
 
-#### Build Debian Package
+### Windows
+
+#### Method 1: Run from source
+
 ```bash
-sudo apt install dh-python python3-setuptools debhelper
-dpkg-buildpackage -us -uc -b
+# 1. Install Python 3.10+ from python.org
+
+# 2. Install dependencies
+pip install PyQt5 pyserial
+
+# 3. Clone and run
+git clone https://github.com/kryntx/MOUSART.git
+cd MOUSART
+python -m mousart
+```
+
+#### Method 2: Build EXE
+
+```bash
+# 1. Install dependencies
+pip install PyQt5 pyserial pyinstaller
+
+# 2. Build
+pyinstaller pyinstaller.spec --noconfirm
+
+# 3. Run dist/MOUSART.exe
+```
+
+---
+
+## Uninstallation
+
+### Linux deb package
+
+```bash
+# Method 1: Uninstall with apt
+sudo apt remove mouserial
+
+# Method 2: Complete uninstall (including config files)
+sudo apt purge mouserial
+
+# Clean user config (optional)
+rm -rf ~/.mousart
+rm -rf ~/mousart_logs
+```
+
+### Linux source installation
+
+```bash
+# Delete project directory
+rm -rf /path/to/MOUSART
+
+# Clean user config (optional)
+rm -rf ~/.mousart
+rm -rf ~/mousart_logs
+```
+
+### Windows
+
+```
+# Delete project directory
+
+# Clean user config (optional)
+# Delete %USERPROFILE%\.mousart
+# Delete %USERPROFILE%\mousart_logs
 ```
 
 ---
 
 ## Usage Guide
 
-### Virtual Serial Port Mode
-1. Switch to **"Virtual"** mode in the left panel
+### Serial Debug Mode
+1. Select **"Debug"** mode in the left panel
+2. Select a port from the dropdown
+3. Configure serial parameters (baud rate, data bits, stop bits, parity, flow control)
+4. Click **"Open"** to connect
+5. Type in the send area, click **"Send"** or press `Ctrl+Enter`
+6. Receive area shows incoming data in real-time
+
+### Virtual Serial Port Mode (Linux only)
+1. Select **"Virtual"** mode in the left panel
 2. Click **"Start"** to create a virtual port pair
 3. The external port path `/tmp/mousart_vport` is displayed
 4. Connect any serial tool to this path
-5. Send/receive data between MOUSART and the external program
-6. Click **"Stop"** to close
-
-### Hardware Serial Debug Mode
-1. Switch to **"Debug"** mode in the left panel
-2. Select a port from the dropdown
-3. Configure: baud rate, data bits, stop bits, parity, flow control
-4. Click **"Open"** to connect
-5. Type in the send area and click **"Send"** or press `Ctrl+Enter`
-6. Received data appears in real-time in the log area
+5. Type in the send area and send
 
 ### Quick Commands
 1. Click **"+"** in the quick command bar to add a new command
 2. Enter name and data (text or HEX supported)
 3. Left-click a command button to send immediately
 4. Right-click to edit or delete
-5. All commands are auto-saved and restored on next launch
 
-### Auto-Reply
+### Auto-Reply (Serial Debug Mode)
 1. Find the **"Auto Reply"** section in the left panel
 2. Enable the toggle
-3. Set the match keyword (triggers when received data contains this)
-4. Set the response data (auto-sent content)
-5. Optionally set a reply delay (ms)
+3. Set the match keyword and response data
+4. Optionally set a reply delay (ms)
 
 ### Modbus Frame Builder
-1. Click **"Modbus"** in the send toolbar to expand the Modbus panel
+1. Click **"Modbus"** in the send toolbar
 2. Set slave address, function code, start address, quantity
 3. Click **"Build"** to generate a Modbus RTU frame with CRC
-4. Frame data auto-fills the send area
 
 ### Log Recording & Export
 1. Click **"Record"** in the receive toolbar to start auto-recording
 2. All data is saved to `~/mousart_logs/`
-3. Files auto-split at 10MB
-4. Click **"Save"** to manually export as TXT or CSV
+3. Click **"Save"** to manually export as TXT or CSV
 
-### Pin Control
+### Pin Control (Serial Debug Mode)
 1. After opening a port, the pin control bar appears in the left panel
 2. Click DTR/RTS buttons to toggle pin levels
 3. CTS/DSR/DCD/RI status LEDs show real-time pin states
-
-### Profile Management
-1. Find **"Profile"** at the bottom of the left panel
-2. Click **"Save"** to save current settings to a profile
-3. Use the dropdown to switch profiles
-4. Profiles save: serial params, quick commands, auto-reply rules
-
----
-
-## Serial Parameters
-
-| Parameter | Values |
-|-----------|--------|
-| **Baud Rate** | 300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600 or custom (1-9999999) |
-| **Data Bits** | 5, 6, 7, 8 |
-| **Stop Bits** | 1, 1.5, 2 |
-| **Parity** | None, Odd, Even, Mark, Space |
-| **Flow Control** | None, Hardware (RTS/CTS), Software (XON/XOFF) |
-| **Receive Encoding** | UTF-8, GBK, GB18030, Latin-1, ASCII |
-| **Timed Send Interval** | 1 - 3600000 ms (default 1000ms) |
-
----
-
-## Project Structure
-
-```
-MOUSART/
-├── pyproject.toml                   # Python project config
-├── pyinstaller.spec                 # PyInstaller packaging
-├── Makefile                         # Build automation
-├── scripts/                         # Build scripts
-├── resources/icons/                 # App icons
-├── mousart/                         # Python source
-│   ├── __main__.py                  # Entry point
-│   ├── app.py                       # Application bootstrap
-│   ├── core/                        # Backend managers
-│   │   ├── theme_manager.py         # Theme + font scaling
-│   │   ├── serial_manager.py        # Serial I/O via pyserial
-│   │   ├── virtual_serial_manager.py # Virtual port (socat)
-│   │   ├── config_manager.py        # Config, profiles
-│   │   ├── data_analyzer.py         # Encoding, checksums, Modbus
-│   │   └── log_file_manager.py      # Log save/export/record
-│   ├── ui/                          # PyQt6 UI
-│   │   ├── main_window.py           # Frameless window
-│   │   ├── title_bar.py             # Title bar
-│   │   ├── settings_panel.py        # Left sidebar
-│   │   ├── data_panel.py            # Right data area
-│   │   └── widgets/                 # Reusable widgets
-│   └── utils/                       # Utilities
-└── debian/                          # Debian packaging
-```
-
----
-
-## Changelog
-
-### v3.0.0 (2026-05-29)
-**Complete rewrite - Python/PyQt6 version**
-
-- Complete rewrite in Python, migrated from C++/Qt5/QML to Python/PyQt6
-- Cleaner codebase, easier to maintain and extend
-- All v2.0.0 features preserved
-- Optimized cross-platform support (Windows EXE + Linux deb)
-- New application icon design
-
-### v2.0.0 (2026-05-29)
-**Major feature update**
-
-**New:**
-- Pin control: DTR/RTS manual toggle, CTS/DSR/DCD/RI real-time monitoring
-- Auto-reply: auto-respond on keyword match with configurable delay
-- Quick command bar: editable send buttons with persistent storage
-- Multi-encoding: UTF-8 / GBK / GB18030 / Latin-1 / ASCII
-- Newline control: CR / LF independent toggle
-- File send: send any file directly
-- Modbus RTU frame builder & parser
-- Log export: TXT / CSV format with auto-recording
-- RX/TX real-time stats: byte count and rate display
-- Data filtering: keyword / regex
-- Profile management: save/load/switch configurations
-- Checksum tools: Sum8 / XOR8 / CRC16-Modbus / CRC32
-- Send sequence/queue with loop support
-- Send count limit
-
-**Improved:**
-- Baud rate presets extended to 300-921600
-- Log limit raised from 500 to 2000
-- Virtual port mode gains encoding and stats support
-
-### v1.0.0 (2026-05-27)
-- Initial release
-- Virtual and hardware serial port dual mode
-- HEX display and send
-- Timed auto-send
-- Timestamp control
-- Dark/Light theme
-- Windows cross-compilation support
 
 ---
 
 ## FAQ
 
 **Q: Why can't I open the port?**
-A: Usually a permissions issue. Try `sudo python3 -m mousart` or add your user to the `dialout` group:
+A: Usually a permissions issue. Add your user to the `dialout` group:
 ```bash
 sudo usermod -aG dialout $USER
+# Log out and back in for changes to take effect
 ```
-Log out and back in for changes to take effect.
 
 **Q: Virtual serial port doesn't work?**
 A: Make sure `socat` is installed:
@@ -300,37 +259,18 @@ sudo apt install socat
 ```
 
 **Q: Chinese characters appear as garbled text?**
-A: Select the correct encoding in the **"Encoding"** dropdown in the left panel (e.g., GBK).
+A: Select the correct encoding in the **"Encoding"** dropdown (e.g., GBK).
 
 **Q: How to send Modbus commands?**
-A: Click **"Modbus"** in the send toolbar, fill in slave address, function code, start address, and quantity, click **"Build"** to auto-generate the frame, then click Send.
+A: Click **"Modbus"**, fill in parameters, click **"Build"** to auto-generate the frame.
 
 **Q: Where are auto-recorded files saved?**
 A: Default location is `~/mousart_logs/`, filenames follow `mousart_rec_YYYYMMDD_HHmmss.log`.
 
 ---
 
-## Contributing
-
-Issues and Pull Requests are welcome!
-
-1. Fork this repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
 ## License
 
 This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
-
----
-
-## Support
-
-If you encounter any issues or have suggestions:
-- Submit a [GitHub Issue](https://github.com/kryntx/MOUSART/issues)
 
 **MOUSART** - Making serial debugging simpler and more efficient!
