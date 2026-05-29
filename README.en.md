@@ -110,8 +110,16 @@ Download from [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
 
 | Platform | File | Size |
 |----------|------|------|
+| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
 | **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
 | **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+
+#### Debian/Ubuntu Install (Recommended)
+```bash
+# Download and install deb package (dependencies handled automatically)
+wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
+sudo apt install ./mouserial_2.0.0-1_amd64.deb
+```
 
 > Windows version includes all Qt5 runtime dependencies. Extract and run. Hardware serial debug fully functional; virtual serial port is Linux-only.
 

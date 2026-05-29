@@ -108,10 +108,9 @@
 
 #### Debian/Ubuntu 安装 (推荐)
 ```bash
-# 下载并安装 deb 包
+# 下载并安装 deb 包（自动处理依赖）
 wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo dpkg -i mouserial_2.0.0-1_amd64.deb
-sudo apt-get install -f  # 自动修复依赖
+sudo apt install ./mouserial_2.0.0-1_amd64.deb
 ```
 
 > Windows 版本已包含所有运行时依赖，解压即可运行。

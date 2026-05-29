@@ -102,8 +102,16 @@
 
 | 平台 | 下載檔案 | 大小 |
 |------|---------|------|
+| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
 | **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
 | **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+
+#### Debian/Ubuntu 安裝（推薦）
+```bash
+# 下載並安裝 deb 套件（自動處理依賴）
+wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
+sudo apt install ./mouserial_2.0.0-1_amd64.deb
+```
 
 > Windows 版本已包含所有執行時依賴，解壓縮即可執行。
 

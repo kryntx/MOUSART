@@ -90,8 +90,16 @@ Download bei [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
 
 | Plattform | Datei | Größe |
 |-----------|-------|-------|
+| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
 | **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
 | **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+
+#### Debian/Ubuntu-Installation (Empfohlen)
+```bash
+# deb-Paket herunterladen und installieren (Abhängigkeiten werden automatisch behandelt)
+wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
+sudo apt install ./mouserial_2.0.0-1_amd64.deb
+```
 
 > **Linux-Laufzeitabhängigkeiten**: Die vorgefertigte Binärdatei benötigt Qt5 QML-Laufzeitbibliotheken:
 > ```bash

@@ -90,8 +90,16 @@
 
 | 플랫폼 | 파일 | 크기 |
 |--------|------|------|
+| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
 | **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
 | **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+
+#### Debian/Ubuntu 설치 (권장)
+```bash
+# deb 패키지 다운로드 및 설치 (의존성 자동 처리)
+wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
+sudo apt install ./mouserial_2.0.0-1_amd64.deb
+```
 
 > **Linux 런타임 의존성**: 빌드된 바이너리에는 Qt5 QML 런타임 라이브러리가 필요합니다:
 > ```bash
