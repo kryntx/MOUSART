@@ -1,8 +1,7 @@
 """Log file management with auto-recording and file rotation."""
 import os
 from datetime import datetime
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtProperty, pyqtSlot
-from PyQt6.QtWidgets import QFileDialog
+from mousart.qt_compat import *
 
 from mousart.utils.constants import MAX_RECORD_FILE_SIZE
 

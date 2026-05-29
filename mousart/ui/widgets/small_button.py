@@ -1,6 +1,5 @@
 """Small button with optional accent styling."""
-from PyQt6.QtWidgets import QPushButton
-from PyQt6.QtCore import pyqtSignal
+from mousart.qt_compat import *
 
 
 class SmallButton(QPushButton):

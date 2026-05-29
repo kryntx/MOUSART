@@ -4,7 +4,7 @@ import sys
 import subprocess
 import threading
 import time
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtProperty, pyqtSlot, QTimer, QElapsedTimer
+from mousart.qt_compat import *
 
 from mousart.utils.encoding import decode_data
 

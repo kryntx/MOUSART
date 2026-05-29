@@ -1,6 +1,5 @@
 """Small pill-shaped toggle button widget."""
-from PyQt6.QtWidgets import QPushButton
-from PyQt6.QtCore import pyqtSignal, pyqtProperty
+from mousart.qt_compat import *
 
 
 class SmallToggle(QPushButton):

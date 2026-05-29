@@ -1,7 +1,5 @@
 """Auto-reply configuration panel."""
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                               QLineEdit, QSpinBox, QCheckBox)
-from PyQt6.QtCore import pyqtSignal
+from mousart.qt_compat import *
 
 
 class AutoReplyPanel(QWidget):

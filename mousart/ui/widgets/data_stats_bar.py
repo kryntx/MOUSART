@@ -1,6 +1,5 @@
 """Data statistics bar showing RX/TX bytes and rates."""
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+from mousart.qt_compat import *
 
 
 class DataStatsBar(QWidget):
@@ -17,7 +16,7 @@ class DataStatsBar(QWidget):
         self._tx_label = QLabel("TX: 0 B  (0 B/s)")
 
         for label in (self._rx_label, self._tx_label):
-            label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+            label.setAlignment(Qt_AlignmentFlag_AlignVCenter)
             self._layout.addWidget(label)
 
         self._layout.addStretch()

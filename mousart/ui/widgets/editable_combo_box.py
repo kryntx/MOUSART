@@ -1,7 +1,5 @@
 """Editable combo box for custom baud rate entry."""
-from PyQt6.QtWidgets import QComboBox, QCompleter
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIntValidator
+from mousart.qt_compat import *
 
 
 class EditableComboBox(QComboBox):
@@ -12,7 +10,7 @@ class EditableComboBox(QComboBox):
         self._theme_manager = theme_manager
         self.setEditable(True)
         self.setFixedHeight(28)
-        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.setInsertPolicy(QComboBox_InsertPolicy_NoInsert)
 
         # Set integer validator for baud rate
         validator = QIntValidator(1, 9999999, self)

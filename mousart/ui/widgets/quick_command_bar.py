@@ -1,7 +1,5 @@
 """Quick command button bar with flow layout."""
-from PyQt6.QtWidgets import (QWidget, QScrollArea, QHBoxLayout, QVBoxLayout,
-                               QPushButton)
-from PyQt6.QtCore import pyqtSignal, Qt, QSize
+from mousart.qt_compat import *
 
 
 class QuickCommandButton(QPushButton):
@@ -46,7 +44,7 @@ class QuickCommandButton(QPushButton):
         """)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.RightButton:
+        if event.button() == Qt_MouseButton_RightButton:
             self.edit_requested.emit(self._index)
         else:
             super().mousePressEvent(event)
@@ -72,8 +70,8 @@ class QuickCommandBar(QWidget):
         # Scroll area for commands
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setHorizontalScrollBarPolicy(Qt_ScrollBarPolicy_ScrollBarAlwaysOff)
+        self._scroll.setVerticalScrollBarPolicy(Qt_ScrollBarPolicy_ScrollBarAlwaysOff)
         self._scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
 
         self._cmd_widget = QWidget()

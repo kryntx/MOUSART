@@ -1,10 +1,5 @@
 """Right data area with receive log, send area, quick commands, and stats."""
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                               QPlainTextEdit, QLineEdit, QMenu, QSplitter,
-                               QDialog, QFormLayout, QCheckBox, QDialogButtonBox,
-                               QLineEdit as QLE)
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer
-from PyQt6.QtGui import QAction, QTextCursor, QFont, QColor
+from mousart.qt_compat import *
 
 from mousart.ui.widgets.small_toggle import SmallToggle
 from mousart.ui.widgets.small_button import SmallButton
@@ -73,7 +68,7 @@ class DataPanel(QWidget):
         layout.setSpacing(0)
 
         # Use a splitter for receive/send areas
-        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter = QSplitter(Qt_Orientation_Vertical)
         splitter.setChildrenCollapsible(False)
 
         # --- Receive area ---
@@ -310,8 +305,8 @@ class DataPanel(QWidget):
                 self._quick_cmd_bar.refresh)
 
     def eventFilter(self, obj, event):
-        if obj == self._send_text and event.type() == event.Type.KeyPress:
-            if event.key() == Qt.Key.Key_Return and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        if obj == self._send_text and event.type() == QEvent_Type_KeyPress:
+            if event.key() == Qt_Key_Return and event.modifiers() & Qt_KeyboardModifier_ControlModifier:
                 self._do_send()
                 return True
         return super().eventFilter(obj, event)
@@ -530,12 +525,12 @@ class DataPanel(QWidget):
         layout.addRow("数据:", data_input)
         layout.addRow(hex_check)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox_StandardButton_Ok | QDialogButtonBox_StandardButton_Cancel)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addRow(buttons)
 
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        if dialog.exec() == QDialog_DialogCode_Accepted:
             if name_input.text() and self._config_manager:
                 self._config_manager.addQuickCommand(
                     name_input.text(), data_input.text(), hex_check.isChecked())
@@ -559,12 +554,12 @@ class DataPanel(QWidget):
         layout.addRow("数据:", data_input)
         layout.addRow(hex_check)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox_StandardButton_Ok | QDialogButtonBox_StandardButton_Cancel)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addRow(buttons)
 
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        if dialog.exec() == QDialog_DialogCode_Accepted:
             self._config_manager.updateQuickCommand(
                 index, name_input.text(), data_input.text(), hex_check.isChecked())
 

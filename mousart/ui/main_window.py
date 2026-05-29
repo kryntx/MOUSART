@@ -1,9 +1,6 @@
 """Custom frameless main window with shadow, resize handles, and drag support."""
 import sys
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                               QGraphicsDropShadowEffect, QApplication)
-from PyQt6.QtCore import Qt, QPoint, QRect, QSize
-from PyQt6.QtGui import QPainter, QColor, QPen, QCursor
+from mousart.qt_compat import *
 
 from mousart.ui.title_bar import TitleBar
 from mousart.ui.settings_panel import SettingsPanel
@@ -41,8 +38,8 @@ class MainWindow(QMainWindow):
         self._drag_start = None
         self._drag_geom = None
 
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt_WindowType_FramelessWindowHint | Qt_WindowType_Window)
+        self.setAttribute(Qt_WidgetAttribute_WA_TranslucentBackground)
         self.setMinimumSize(700, 500)
         self.resize(1000, 700)
 
@@ -164,7 +161,6 @@ class MainWindow(QMainWindow):
         self._separator.setStyleSheet(f"background: {border};")
 
         # Update font size
-        from PyQt6.QtGui import QFont
         font = QFont()
         font.setPointSize(int(12 * scale))
         QApplication.instance().setFont(font)
@@ -184,7 +180,7 @@ class MainWindow(QMainWindow):
             layout.setContentsMargins(12, 12, 12, 12)
 
     def changeEvent(self, event):
-        if event.type() == event.Type.WindowStateChange:
+        if event.type() == QEvent_Type_WindowStateChange:
             self._is_maximized = self.isMaximized()
             self._title_bar.set_maximized(self._is_maximized)
             self._update_geometry()
@@ -223,21 +219,21 @@ class MainWindow(QMainWindow):
             return RESIZE_BOTTOM
         return RESIZE_NONE
 
-    def _cursor_for_direction(self, direction: int) -> Qt.CursorShape:
+    def _cursor_for_direction(self, direction: int):
         cursors = {
-            RESIZE_LEFT: Qt.CursorShape.SizeHorCursor,
-            RESIZE_RIGHT: Qt.CursorShape.SizeHorCursor,
-            RESIZE_TOP: Qt.CursorShape.SizeVerCursor,
-            RESIZE_BOTTOM: Qt.CursorShape.SizeVerCursor,
-            RESIZE_TOP_LEFT: Qt.CursorShape.SizeFDiagCursor,
-            RESIZE_TOP_RIGHT: Qt.CursorShape.SizeBDiagCursor,
-            RESIZE_BOTTOM_LEFT: Qt.CursorShape.SizeBDiagCursor,
-            RESIZE_BOTTOM_RIGHT: Qt.CursorShape.SizeFDiagCursor,
+            RESIZE_LEFT: Qt_CursorShape_SizeHorCursor,
+            RESIZE_RIGHT: Qt_CursorShape_SizeHorCursor,
+            RESIZE_TOP: Qt_CursorShape_SizeVerCursor,
+            RESIZE_BOTTOM: Qt_CursorShape_SizeVerCursor,
+            RESIZE_TOP_LEFT: Qt_CursorShape_SizeFDiagCursor,
+            RESIZE_TOP_RIGHT: Qt_CursorShape_SizeBDiagCursor,
+            RESIZE_BOTTOM_LEFT: Qt_CursorShape_SizeBDiagCursor,
+            RESIZE_BOTTOM_RIGHT: Qt_CursorShape_SizeFDiagCursor,
         }
-        return cursors.get(direction, Qt.CursorShape.ArrowCursor)
+        return cursors.get(direction, Qt_CursorShape_ArrowCursor)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton and not self._is_maximized:
+        if event.button() == Qt_MouseButton_LeftButton and not self._is_maximized:
             self._resize_direction = self._get_resize_direction(event.pos())
             if self._resize_direction != RESIZE_NONE:
                 self._drag_start = event.globalPosition().toPoint()

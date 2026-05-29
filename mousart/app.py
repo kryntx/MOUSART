@@ -1,9 +1,7 @@
 """Application entry point for MOUSART."""
 import sys
 import os
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt, QSettings
-from PyQt6.QtGui import QIcon
+from mousart.qt_compat import *
 
 from mousart import __version__, __app_name__
 from mousart.core.theme_manager import ThemeManager
@@ -17,9 +15,10 @@ from mousart.ui.main_window import MainWindow
 
 def main():
     """Main entry point for MOUSART application."""
-    # High DPI scaling
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    # High DPI scaling (PyQt5 doesn't have PassThrough)
+    if Qt_HighDpiScaleFactorRoundingPolicy_PassThrough is not None:
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt_HighDpiScaleFactorRoundingPolicy_PassThrough)
 
     app = QApplication(sys.argv)
     app.setApplicationName(__app_name__)

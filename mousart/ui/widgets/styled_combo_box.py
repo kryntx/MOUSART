@@ -1,5 +1,5 @@
 """Styled combo box widget."""
-from PyQt6.QtWidgets import QComboBox
+from mousart.qt_compat import *
 
 
 class StyledComboBox(QComboBox):

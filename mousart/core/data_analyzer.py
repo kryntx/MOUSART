@@ -1,6 +1,6 @@
 """Data analysis utilities - encoding, checksums, Modbus, filtering."""
 import re
-from PyQt6.QtCore import QObject, pyqtSignal
+from mousart.qt_compat import *
 
 from mousart.utils.encoding import decode_data, encode_string
 from mousart.utils.checksum import calc_sum8, calc_xor8, calc_crc16_modbus, calc_crc32

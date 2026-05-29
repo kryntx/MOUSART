@@ -1,7 +1,5 @@
 """Custom title bar widget with icon, font scale, theme toggle, and window controls."""
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
-from PyQt6.QtCore import pyqtSignal, Qt, QSize
-from PyQt6.QtGui import QPainter, QColor, QPen, QMouseEvent
+from mousart.qt_compat import *
 
 
 class TitleBarButton(QPushButton):
@@ -42,7 +40,7 @@ class TitleBarButton(QPushButton):
         else:
             painter.setPen(QColor(self._theme_manager.get_color_hex("textSecondary")) if self._theme_manager else QColor("#8899aa"))
 
-        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.setBrush(Qt_BrushStyle_NoBrush)
         pen = painter.pen()
         pen.setWidthF(1.2)
         painter.setPen(pen)
@@ -180,21 +178,20 @@ class TitleBar(QWidget):
         accent = QColor(self._theme_manager.get_color_hex("accent")) if self._theme_manager else QColor("#00d4aa")
 
         pen = QPen(accent, 2)
-        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setCapStyle(Qt_PenCapStyle_RoundCap)
         painter.setPen(pen)
 
         w, h = self._icon_widget.width(), self._icon_widget.height()
         cx, cy = w / 2, h / 2
 
         # Draw bezier curve (serial signal wave)
-        from PyQt6.QtGui import QPainterPath
         path = QPainterPath()
         path.moveTo(2, cy)
         path.cubicTo(cx * 0.5, cy - 6, cx, cy + 6, w - 2, cy)
         painter.drawPath(path)
 
         # Draw center dot
-        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setPen(Qt_PenStyle_NoPen)
         painter.setBrush(accent)
         painter.drawEllipse(int(cx) - 2, int(cy) - 2, 4, 4)
         painter.end()
@@ -207,7 +204,7 @@ class TitleBar(QWidget):
         # Background
         bg = QColor(self._theme_manager.get_color_hex("bgTertiary")) if self._theme_manager else QColor("#0f3460")
         painter.setBrush(bg)
-        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setPen(Qt_PenStyle_NoPen)
         painter.drawRoundedRect(0, 0, w, h, 2, 2)
 
         # Fill
@@ -222,7 +219,7 @@ class TitleBar(QWidget):
 
     def _on_scale_click(self, event: QMouseEvent):
         if self._theme_manager:
-            ratio = event.position().x() / self._scale_bar.width()
+            ratio = QMouseEvent_Position(event).x() / self._scale_bar.width()
             self._theme_manager.fontScale = 0.8 + ratio * 0.7
             self._scale_bar.update()
 
@@ -238,8 +235,7 @@ class TitleBar(QWidget):
         if self._theme_manager and self._theme_manager.theme == "dark":
             # Moon icon
             painter.setBrush(text_color)
-            painter.setPen(Qt.PenStyle.NoPen)
-            from PyQt6.QtGui import QPainterPath
+            painter.setPen(Qt_PenStyle_NoPen)
             path = QPainterPath()
             path.addEllipse(int(cx - r), int(cy - r), int(r * 2), int(r * 2))
             path.addEllipse(int(cx + r * 0.4 - r * 0.7), int(cy - r * 0.3 - r * 0.7),
@@ -249,7 +245,7 @@ class TitleBar(QWidget):
             # Sun icon
             pen = QPen(text_color, 1.5)
             painter.setPen(pen)
-            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setBrush(Qt_BrushStyle_NoBrush)
             painter.drawEllipse(int(cx - r * 0.5), int(cy - r * 0.5),
                                int(r), int(r))
             import math
@@ -264,9 +260,9 @@ class TitleBar(QWidget):
         painter.end()
 
     def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt_MouseButton_LeftButton:
             self.maximize_clicked.emit()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt_MouseButton_LeftButton:
             self.window().startSystemMove()

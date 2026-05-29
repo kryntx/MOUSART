@@ -2,7 +2,7 @@
 import os
 import threading
 import time
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtProperty, pyqtSlot, QTimer, QElapsedTimer, Qt
+from mousart.qt_compat import *
 
 import serial
 import serial.tools.list_ports
@@ -47,7 +47,7 @@ class SerialPortManager(QObject):
 
         # Timed send
         self._timed_send_timer = QTimer(self)
-        self._timed_send_timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._timed_send_timer.setTimerType(Qt_TimerType_PreciseTimer)
         self._timed_send_timer.timeout.connect(self._on_timed_send_tick)
         self._timed_send_data = ""
         self._timed_send_hex = False
@@ -92,7 +92,7 @@ class SerialPortManager(QObject):
 
         # Send sequence
         self._send_seq_timer = QTimer(self)
-        self._send_seq_timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._send_seq_timer.setTimerType(Qt_TimerType_PreciseTimer)
         self._send_seq_timer.timeout.connect(self._on_send_sequence_tick)
         self._send_seq_data = []
         self._send_seq_delays = []

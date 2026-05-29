@@ -1,7 +1,5 @@
 """Pin control bar with DTR/RTS toggles and CTS/DSR/DCD/RI LED indicators."""
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPainter, QColor
+from mousart.qt_compat import *
 
 
 class LEDIndicator(QWidget):
@@ -22,11 +20,11 @@ class LEDIndicator(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         # Draw LED dot
         painter.setBrush(self._color)
-        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setPen(Qt_PenStyle_NoPen)
         painter.drawEllipse(4, 5, 10, 10)
         # Draw label
         painter.setPen(QColor("#8899aa"))
-        painter.drawText(16, 0, 16, 20, Qt.AlignmentFlag.AlignVCenter, self._label)
+        painter.drawText(16, 0, 16, 20, Qt_AlignmentFlag_AlignVCenter, self._label)
         painter.end()
 
 

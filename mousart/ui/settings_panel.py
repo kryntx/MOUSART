@@ -1,7 +1,5 @@
 """Left sidebar settings panel with mode selector, serial config, and profiles."""
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                               QScrollArea, QFrame, QPushButton)
-from PyQt6.QtCore import pyqtSignal, Qt
+from mousart.qt_compat import *
 
 from mousart.ui.widgets.mode_button import ModeButton
 from mousart.ui.widgets.action_button import ActionButton
@@ -41,7 +39,7 @@ class SettingsPanel(QWidget):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt_ScrollBarPolicy_ScrollBarAlwaysOff)
         scroll.setStyleSheet("QScrollArea { border: none; }")
 
         content = QWidget()
@@ -90,7 +88,7 @@ class SettingsPanel(QWidget):
 
     def _build_separator(self):
         sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setFrameShape(QFrame_Shape_HLine)
         sep.setStyleSheet("background: #2a2a4a; max-height: 1px;")
         self._layout.addWidget(sep)
         self._separator = sep
@@ -321,7 +319,7 @@ class SettingsPanel(QWidget):
         status_layout.setContentsMargins(0, 0, 0, 0)
 
         self._status_label = QLabel("未启动 Inactive")
-        self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._status_label.setAlignment(Qt_AlignmentFlag_AlignCenter)
         self._status_label.setStyleSheet("font-size: 11px; color: #8899aa;")
         status_layout.addWidget(self._status_label)
 

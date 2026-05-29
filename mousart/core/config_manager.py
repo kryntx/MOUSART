@@ -1,7 +1,7 @@
 """Configuration persistence - quick commands, auto-reply rules, profiles."""
 import json
 import os
-from PyQt6.QtCore import QObject, pyqtSignal, QSettings, QDir
+from mousart.qt_compat import *
 
 from mousart.utils.constants import DEFAULT_QUICK_COMMANDS
 

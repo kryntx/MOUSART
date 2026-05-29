@@ -1,6 +1,5 @@
 """Theme management - dark/light mode and font scaling."""
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtProperty, QSettings
-from PyQt6.QtGui import QColor
+from mousart.qt_compat import *
 
 
 class ThemeManager(QObject):

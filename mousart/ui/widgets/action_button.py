@@ -1,7 +1,5 @@
 """Large action button (Open/Close, Start/Stop)."""
-from PyQt6.QtWidgets import QPushButton
-from PyQt6.QtCore import pyqtSignal, pyqtProperty, QSize
-from PyQt6.QtGui import QPainter, QColor
+from mousart.qt_compat import *
 
 
 class ActionButton(QPushButton):
