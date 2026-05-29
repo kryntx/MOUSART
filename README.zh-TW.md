@@ -9,11 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
-[![Toolchain](https://img.shields.io/badge/toolchain-Qt5%20%7C%20CMake-green)](https://www.qt.io/)
-[![C++](https://img.shields.io/badge/C%2B%2B-17-blue)](https://isocpp.org/)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** 是一款基於 Qt5/QML 構建的全功能串列埠偵錯工具，專為嵌入式開發、硬體偵錯和串列通訊場景設計。v2.0 新增了自動應答、Modbus 協定支援、快捷命令、資料錄製與匯出、腳位控制、多編碼支援等數十項專業功能。
+**MOUSART** 是一款基於 Python/PyQt6 構建的全功能串列埠偵錯工具，專為嵌入式開發、硬體偵錯和串列通訊場景設計。v3.0 為完全重構版本，採用 Python 重寫，支援 Windows 和 Linux 雙平臺，包含自動應答、Modbus 協定支援、快捷命令、資料錄製與匯出、腳位控制、多編碼支援等數十項專業功能。
 
 ---
 
@@ -79,19 +79,6 @@
 
 ---
 
-## 截圖
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="MOUSART 串列偵錯介面">
-  <br>
-  <em>MOUSART 串列偵錯介面（淺色主題）</em>
-</div>
-<div align="center">
-  <img src="img/v1.png" width="800" alt="MOUSART 虛擬串列埠介面">
-  <br>
-  <em>MOUSART 虛擬串列埠介面（淺色主題）</em>
-</div>
-
 ---
 
 ## 快速開始
@@ -102,56 +89,49 @@
 
 | 平台 | 下載檔案 | 大小 |
 |------|---------|------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Debian/Ubuntu 安裝（推薦）
 ```bash
 # 下載並安裝 deb 套件（自動處理依賴）
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
 
-> Windows 版本已包含所有執行時依賴，解壓縮即可執行。
-
-> **Linux 執行依賴**：預建構版本需要系統安裝 Qt5 QML 執行時庫：
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
+> Windows 版本為單檔 exe，雙擊即可執行，無需安裝。
 
 ### 從原始碼建構
 
 ```bash
 # Ubuntu/Debian 依賴安裝
 sudo apt update
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+sudo apt install python3-pyqt6 python3-serial socat
 
-# 複製並編譯
+# 複製專案
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+
+# 安裝 Python 依賴
+pip3 install PyQt6 pyserial
 
 # 執行
-./build/MOUSART
+python3 -m mousart
 ```
 
-#### Windows 交叉編譯
+#### 建構 Windows EXE
 
 ```bash
-sudo apt install mingw-w64
-pip3 install aqtinstall
-aqt install-qt windows desktop 5.15.2 win64_mingw81 -O qt5-win
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# 輸出: dist/MOUSART.exe
+```
 
-cmake -B build-win \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake \
-  -DCMAKE_PREFIX_PATH=qt5-win/5.15.2/mingw81_64 \
-  -DCMAKE_BUILD_TYPE=Release
-cmake --build build-win
+#### 建構 Debian 套件
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -223,30 +203,56 @@ cmake --build build-win
 
 ```
 MOUSART/
-├── CMakeLists.txt                   # CMake 建構設定
-├── qml.qrc                          # QML 資源檔案
-├── cmake/                           # 交叉編譯工具鏈
-├── img/                             # 截圖
-├── src/                             # C++ 原始碼
-│   ├── main.cpp                     # 進入點
-│   └── core/                        # 核心模組
-│       ├── thememanager.h/.cpp      # 主題管理
-│       ├── serialportmanager.h/.cpp # 串列 I/O、腳位、自動應答、統計
-│       ├── virtualserialmanager.h/.cpp # 虛擬串列埠
-│       ├── configmanager.h/.cpp     # 設定管理、Profile
-│       ├── dataanalyzer.h/.cpp      # 編碼、校驗和、Modbus
-│       └── logfilemanager.h/.cpp    # 日誌儲存、匯出
-└── qml/                             # QML 介面
-    ├── main.qml                     # 主視窗
-    ├── TitleBar.qml                 # 標題列
-    ├── SettingsPanel.qml            # 左側設定面板
-    ├── DataPanel.qml                # 右側資料面板
-    └── components/                  # 可複用元件
+├── pyproject.toml                   # Python 專案設定
+├── pyinstaller.spec                 # PyInstaller 打包設定
+├── Makefile                         # 建構自動化
+├── scripts/                         # 建構腳本
+│   ├── build_exe.sh                 # Windows EXE 建構
+│   ├── build_deb.sh                 # Debian 套件建構
+│   └── build_icons.sh              # 圖示生成
+├── resources/icons/                 # 應用圖示
+│   ├── mousart.svg                  # 原始 SVG 圖示
+│   └── mousart_*.png               # 各尺寸 PNG
+├── mousart/                         # Python 原始碼
+│   ├── __main__.py                  # 進入點
+│   ├── app.py                       # 應用啟動
+│   ├── core/                        # 核心模組
+│   │   ├── theme_manager.py         # 主題管理
+│   │   ├── serial_manager.py        # 串列 I/O、腳位、自動應答
+│   │   ├── virtual_serial_manager.py # 虛擬串列埠
+│   │   ├── config_manager.py        # 設定管理、Profile
+│   │   ├── data_analyzer.py         # 編碼、校驗和、Modbus
+│   │   └── log_file_manager.py      # 日誌儲存、匯出
+│   ├── ui/                          # 介面模組
+│   │   ├── main_window.py           # 主視窗
+│   │   ├── title_bar.py             # 標題列
+│   │   ├── settings_panel.py        # 左側設定面板
+│   │   ├── data_panel.py            # 右側資料面板
+│   │   ├── widgets/                 # 可複用元件
+│   │   └── dialogs/                 # 對話框
+│   └── utils/                       # 工具模組
+│       ├── constants.py             # 常數定義
+│       ├── encoding.py              # 編碼轉換
+│       ├── checksum.py              # 校驗和計算
+│       ├── modbus.py                # Modbus 幀構建/解析
+│       ├── number_convert.py        # 進制轉換
+│       ├── hex_display.py           # HEX 顯示格式化
+│       └── stylesheet.py            # QSS 樣式生成
+└── debian/                          # Debian 打包設定
 ```
 
 ---
 
 ## 更新日誌
+
+### v3.0.0 (2026-05-29)
+**完全重構 - Python/PyQt6 版本**
+
+- 完全使用 Python 重寫，從 C++/Qt5/QML 遷移到 Python/PyQt6
+- 更簡潔的程式碼結構，更易於維護和擴展
+- 保持所有 v2.0.0 功能完整
+- 最佳化跨平臺支援（Windows EXE + Linux deb）
+- 新增應用圖示設計
 
 ### v2.0.0 (2026-05-29)
 **重大功能更新**
@@ -262,7 +268,7 @@ MOUSART/
 
 ## 常見問題
 
-**Q: 無法開啟串列埠？** 通常是權限問題，使用 `sudo` 或將使用者新增到 `dialout` 群組。
+**Q: 無法開啟串列埠？** 通常是權限問題，使用 `sudo python3 -m mousart` 或將使用者新增到 `dialout` 群組。
 
 **Q: 虛擬串列埠無法使用？** 請確保已安裝 `socat`：`sudo apt install socat`
 

@@ -191,7 +191,7 @@ Première version
 
 ## FAQ
 
-**Q: Impossible d'ouvrir le port ?** Problème de permissions. Utilisez `sudo` ou ajoutez l'utilisateur au groupe `dialout`.
+**Q: Impossible d'ouvrir le port ?** Problème de permissions. Utilisez `sudo python3 -m mousart` ou ajoutez l'utilisateur au groupe `dialout`.
 
 **Q: Le port virtuel ne fonctionne pas ?** Installez `socat` : `sudo apt install socat`
 

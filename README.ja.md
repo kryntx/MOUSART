@@ -9,9 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** は Qt5/QML で構で構築されたフル機能シリアルポートデバッガーです。組み込み開発、ハードウェアデバッグ、シリアル通信向けに設計されています。v2.0 では自動応答、Modbus プロトコルサポート、クイックコマンド、データ記録・エクスポート、ピン制御、マルチエンコーディング対応など多数のプロフェッショナル機能を追加しました。
+**MOUSART** は Python/PyQt6 で構築されたフル機能シリアルポートデバッガーです。組み込み開発、ハードウェアデバッグ、シリアル通信向けに設計されています。v3.0 は完全な Python 書き換え版であり、自動応答、Modbus プロトコルサポート、クイックコマンド、データ記録・エクスポート、ピン制御、マルチエンコーディング対応など多数のプロフェッショナル機能を追加しました。
 
 ---
 
@@ -72,14 +74,6 @@
 
 ---
 
-## スクリーンショット
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="MOUSART デバッグ画面">
-  <br>
-  <em>MOUSART シリアルデバッグ画面（ライトテーマ）</em>
-</div>
-
 ---
 
 ## クイックスタート
@@ -90,36 +84,45 @@
 
 | プラットフォーム | ファイル | サイズ |
 |-----------------|---------|--------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Debian/Ubuntu インストール（推奨）
 ```bash
 # deb パッケージをダウンロードしてインストール（依存関係は自動処理）
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
-
-> **Linux ランタイム依存**: ビルド済みバイナリには Qt5 QML ランタイムライブラリが必要です：
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
 
 ### ソースからビルド
 
 ```bash
-# Ubuntu/Debian
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+# Ubuntu/Debian 依存パッケージ
+sudo apt install python3-pyqt6 python3-serial socat
 
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/MOUSART
+
+# Python 依存関係をインストール
+pip3 install PyQt6 pyserial
+
+# 実行
+python3 -m mousart
+```
+
+#### Windows EXE をビルド
+
+```bash
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# 出力: dist/MOUSART.exe
+```
+
+#### Debian パッケージをビルド
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -170,6 +173,15 @@ cmake --build build
 
 ## 変更履歴
 
+### v3.0.0 (2026-05-29)
+**完全書き換え - Python/PyQt6 版**
+
+- C++/Qt5/QML から Python/PyQt6 への完全な Python 書き換え
+- よりシンプルなコード構造、保守と拡張が容易
+- v2.0.0 の全機能を完全に保持
+- クロスプラットフォーム対応を最適化（Windows EXE + Linux deb）
+- 新しいアプリケーションアイコンデザイン
+
 ### v2.0.0 (2026-05-29)
 ピン制御、自動応答、クイックコマンド、マルチエンコーディング、Modbus RTU、ログエクスポート、RX/TX統計、データフィルタリング、プロファイル管理、チェックサムツール、送信シーケンスを追加
 
@@ -180,7 +192,7 @@ cmake --build build
 
 ## FAQ
 
-**Q: ポートが開けない？** 権限の問題です。`sudo` で実行するか、`dialout` グループにユーザーを追加してください。
+**Q: ポートが開けない？** 権限の問題です。`sudo python3 -m mousart` で実行するか、`dialout` グループにユーザーを追加してください。
 
 **Q: 仮想シリアルポートが動作しない？** `socat` がインストールされているか確認：`sudo apt install socat`
 

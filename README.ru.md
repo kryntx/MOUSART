@@ -9,9 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** — полнофункциональный отладчик последовательных портов, созданный на Qt5/QML, предназначенный для встраиваемой разработки, отладки аппаратного обеспечения и последовательной связи. Версия 2.0 добавляет автоответ, поддержку протокола Modbus, быстрые команды, запись и экспорт данных, управление выводами, поддержку нескольких кодировок и десятки профессиональных функций.
+**MOUSART** — полнофункциональный отладчик последовательных портов, созданный на Python/PyQt6, предназначенный для встраиваемой разработки, отладки аппаратного обеспечения и последовательной связи. Версия 3.0 — это полная переработка на Python, которая добавляет автоответ, поддержку протокола Modbus, быстрые команды, запись и экспорт данных, управление выводами, поддержку нескольких кодировок и десятки профессиональных функций.
 
 ---
 
@@ -72,14 +74,6 @@
 
 ---
 
-## Скриншоты
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="Интерфейс отладки MOUSART">
-  <br>
-  <em>Интерфейс последовательной отладки MOUSART (светлая тема)</em>
-</div>
-
 ---
 
 ## Быстрый старт
@@ -90,36 +84,45 @@
 
 | Платформа | Файл | Размер |
 |-----------|------|--------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23МБ |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23МБ |
 
 #### Установка Debian/Ubuntu (Рекомендуется)
 ```bash
 # Скачать и установить deb-пакет (зависимости обрабатываются автоматически)
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
-
-> **Зависимости времени выполнения Linux**: Предварительно собранный бинарный файл требует библиотеки Qt5 QML:
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
 
 ### Сборка из исходного кода
 
 ```bash
-# Ubuntu/Debian
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+# Ubuntu/Debian зависимости
+sudo apt install python3-pyqt6 python3-serial socat
 
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/MOUSART
+
+# Установить зависимости Python
+pip3 install PyQt6 pyserial
+
+# Запуск
+python3 -m mousart
+```
+
+#### Сборка EXE для Windows
+
+```bash
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# Выход: dist/MOUSART.exe
+```
+
+#### Сборка пакета Debian
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -169,6 +172,15 @@ cmake --build build
 
 ## Журнал изменений
 
+### v3.0.0 (2026-05-29)
+**Полная переработка — версия Python/PyQt6**
+
+- Полная переработка на Python, миграция с C++/Qt5/QML на Python/PyQt6
+- Более простая структура кода, легче поддерживать и расширять
+- Все функции v2.0.0 полностью сохранены
+- Оптимизированная кроссплатформенная поддержка (Windows EXE + Linux deb)
+- Новый дизайн иконки приложения
+
 ### v2.0.0 (2026-05-29)
 Управление выводами, автоответ, быстрые команды, множественные кодировки, Modbus RTU, экспорт журнала, статистика RX/TX, фильтрация данных, управление профилями, инструменты контрольных сумм, последовательность отправки
 
@@ -179,7 +191,7 @@ cmake --build build
 
 ## FAQ
 
-**Q: Не удаётся открыть порт?** Проблема с правами доступа. Используйте `sudo` или добавьте пользователя в группу `dialout`.
+**Q: Не удаётся открыть порт?** Проблема с правами доступа. Используйте `sudo python3 -m mousart` или добавьте пользователя в группу `dialout`.
 
 **Q: Виртуальный порт не работает?** Установите `socat`: `sudo apt install socat`
 

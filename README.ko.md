@@ -9,9 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART**는 Qt5/QML로 구축된 풀 기능 시리얼 포트 디버거입니다. 임베디드 개발, 하드웨어 디버깅, 시리얼 통신을 위해 설계되었습니다. v2.0에서는 자동 응답, Modbus 프로토콜 지원, 빠른 명령, 데이터 기록 및 내보내기, 핀 제어, 다중 인코딩 지원 등 수십 가지 전문 기능을 추가했습니다.
+**MOUSART**는 Python/PyQt6로 구축된 풀 기능 시리얼 포트 디버거입니다. 임베디드 개발, 하드웨어 디버깅, 시리얼 통신을 위해 설계되었습니다. v3.0은 완전한 Python 재작성 버전으로, 자동 응답, Modbus 프로토콜 지원, 빠른 명령, 데이터 기록 및 내보내기, 핀 제어, 다중 인코딩 지원 등 수십 가지 전문 기능을 추가했습니다.
 
 ---
 
@@ -72,14 +74,6 @@
 
 ---
 
-## 스크린샷
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="MOUSART 디버그 인터페이스">
-  <br>
-  <em>MOUSART 시리얼 디버그 인터페이스 (라이트 테마)</em>
-</div>
-
 ---
 
 ## 빠른 시작
@@ -90,36 +84,45 @@
 
 | 플랫폼 | 파일 | 크기 |
 |--------|------|------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Debian/Ubuntu 설치 (권장)
 ```bash
 # deb 패키지 다운로드 및 설치 (의존성 자동 처리)
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
-
-> **Linux 런타임 의존성**: 빌드된 바이너리에는 Qt5 QML 런타임 라이브러리가 필요합니다:
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
 
 ### 소스에서 빌드
 
 ```bash
-# Ubuntu/Debian
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+# Ubuntu/Debian 의존성
+sudo apt install python3-pyqt6 python3-serial socat
 
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/MOUSART
+
+# Python 의존성 설치
+pip3 install PyQt6 pyserial
+
+# 실행
+python3 -m mousart
+```
+
+#### Windows EXE 빌드
+
+```bash
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# 출력: dist/MOUSART.exe
+```
+
+#### Debian 패키지 빌드
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -169,6 +172,15 @@ cmake --build build
 
 ## 변경 로그
 
+### v3.0.0 (2026-05-29)
+**완전 재작성 - Python/PyQt6 버전**
+
+- C++/Qt5/QML에서 Python/PyQt6로 완전한 Python 재작성
+- 더 간결한 코드 구조, 유지보수 및 확장 용이
+- v2.0.0의 모든 기능 완전히 보존
+- 크로스 플랫폼 지원 최적화 (Windows EXE + Linux deb)
+- 새로운 애플리케이션 아이콘 디자인
+
 ### v2.0.0 (2026-05-29)
 핀 제어, 자동 응답, 빠른 명령, 다중 인코딩, Modbus RTU, 로그 내보내기, RX/TX 통계, 데이터 필터링, 프로필 관리, 체크섬 도구, 전송 시퀀스 추가
 
@@ -179,7 +191,7 @@ cmake --build build
 
 ## FAQ
 
-**Q: 포트를 열 수 없나요?** 권한 문제입니다. `sudo`로 실행하거나 `dialout` 그룹에 사용자를 추가하세요.
+**Q: 포트를 열 수 없나요?** 권한 문제입니다. `sudo python3 -m mousart`로 실행하거나 `dialout` 그룹에 사용자를 추가하세요.
 
 **Q: 가상 시리얼 포트가 작동하지 않나요?** `socat`이 설치되어 있는지 확인: `sudo apt install socat`
 
