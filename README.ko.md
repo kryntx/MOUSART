@@ -93,6 +93,14 @@
 | **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
 | **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
 
+> **Linux 런타임 의존성**: 빌드된 바이너리에는 Qt5 QML 런타임 라이브러리가 필요합니다:
+> ```bash
+> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
+>   qml-module-qtquick2 qml-module-qtquick-controls2 \
+>   qml-module-qtquick-layouts qml-module-qtquick-window2 \
+>   qml-module-qtquick-templates2 qml-module-qtqml-models2
+> ```
+
 ### 소스에서 빌드
 
 ```bash

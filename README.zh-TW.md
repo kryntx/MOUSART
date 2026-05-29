@@ -107,6 +107,14 @@
 
 > Windows 版本已包含所有執行時依賴，解壓縮即可執行。
 
+> **Linux 執行依賴**：預建構版本需要系統安裝 Qt5 QML 執行時庫：
+> ```bash
+> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
+>   qml-module-qtquick2 qml-module-qtquick-controls2 \
+>   qml-module-qtquick-layouts qml-module-qtquick-window2 \
+>   qml-module-qtquick-templates2 qml-module-qtqml-models2
+> ```
+
 ### 從原始碼建構
 
 ```bash

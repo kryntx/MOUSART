@@ -115,6 +115,14 @@ Download from [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
 
 > Windows version includes all Qt5 runtime dependencies. Extract and run. Hardware serial debug fully functional; virtual serial port is Linux-only.
 
+> **Linux runtime dependencies**: The pre-built Linux binary requires Qt5 QML runtime libraries:
+> ```bash
+> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
+>   qml-module-qtquick2 qml-module-qtquick-controls2 \
+>   qml-module-qtquick-layouts qml-module-qtquick-window2 \
+>   qml-module-qtquick-templates2 qml-module-qtqml-models2
+> ```
+
 ### Build from Source
 
 #### Requirements

@@ -107,6 +107,14 @@
 
 > Windows 版本已包含所有运行时依赖，解压即可运行。
 
+> **Linux 运行依赖**：预构建版本需要系统安装 Qt5 QML 运行时库：
+> ```bash
+> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
+>   qml-module-qtquick2 qml-module-qtquick-controls2 \
+>   qml-module-qtquick-layouts qml-module-qtquick-window2 \
+>   qml-module-qtquick-templates2 qml-module-qtqml-models2
+> ```
+
 ### 从源码构建
 
 ```bash
