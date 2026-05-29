@@ -2,9 +2,10 @@
 Name=MOUSART
 Comment=Full-featured Serial Port Debugging Tool
 Comment[zh]=全功能串口调试工具
-Exec=/usr/bin/MOUSART
+Exec=/usr/bin/mousart
 Icon=MOUSART
 Terminal=false
 Type=Application
 Categories=Development;Electronics;
-Keywords=serial;port;debug;uart;
+Keywords=serial;port;debug;uart;embedded;
+StartupWMClass=MOUSART

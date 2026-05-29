@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d4aa"/>
+      <stop offset="100%" style="stop-color:#00b894"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded rectangle -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)" stroke="#2a2a4a" stroke-width="4"/>
+
+  <!-- Serial signal wave (bezier curve) -->
+  <path d="M 100 256 C 160 180, 256 340, 412 256"
+        stroke="url(#accentGrad)" stroke-width="20" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Second wave (subtle) -->
+  <path d="M 120 280 C 180 220, 260 340, 392 280"
+        stroke="#00d4aa" stroke-width="8" fill="none" opacity="0.3"
+        stroke-linecap="round"/>
+
+  <!-- Center dot (data point) -->
+  <circle cx="256" cy="256" r="18" fill="#00d4aa"/>
+
+  <!-- Small decorative dots along the wave -->
+  <circle cx="140" cy="234" r="6" fill="#00d4aa" opacity="0.5"/>
+  <circle cx="340" cy="270" r="6" fill="#00d4aa" opacity="0.5"/>
+
+  <!-- TX/RX arrows -->
+  <g transform="translate(180, 340)" opacity="0.6">
+    <!-- TX arrow -->
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#569cd6" stroke-width="4" stroke-linecap="round"/>
+    <polygon points="60,-8 76,0 60,8" fill="#569cd6"/>
+    <text x="24" y="-10" fill="#569cd6" font-family="monospace" font-size="18" font-weight="bold">TX</text>
+  </g>
+  <g transform="translate(272, 340)" opacity="0.6">
+    <!-- RX arrow -->
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#4ec9b0" stroke-width="4" stroke-linecap="round"/>
+    <polygon points="0,-8 -16,0 0,8" fill="#4ec9b0"/>
+    <text x="20" y="-10" fill="#4ec9b0" font-family="monospace" font-size="18" font-weight="bold">RX</text>
+  </g>
+
+  <!-- Text "MOUSART" -->
+  <text x="256" y="160" text-anchor="middle" fill="#e0e0e0"
+        font-family="'Segoe UI', Arial, sans-serif" font-size="56" font-weight="bold"
+        letter-spacing="6">MOUSART</text>
+
+  <!-- Subtitle -->
+  <text x="256" y="195" text-anchor="middle" fill="#8899aa"
+        font-family="'Segoe UI', Arial, sans-serif" font-size="22"
+        letter-spacing="2">Serial Debug Tool</text>
+</svg>

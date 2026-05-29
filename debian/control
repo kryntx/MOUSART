@@ -2,15 +2,15 @@ Source: mouserial
 Section: devel
 Priority: optional
 Maintainer: kryntx <kryntx@users.noreply.github.com>
-Build-Depends: debhelper (>= 12), cmake (>= 3.16), qtbase5-dev, qtdeclarative5-dev, libqt5serialport5-dev
+Build-Depends: debhelper (>= 12), dh-python, python3-all, python3-setuptools
 Standards-Version: 4.5.0
 Homepage: https://github.com/kryntx/MOUSART
 
 Package: mouserial
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, qml-module-qtquick2, qml-module-qtquick-controls2, qml-module-qtquick-layouts, qml-module-qtquick-window2, qml-module-qtquick-templates2, qml-module-qtqml-models2
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}, python3-pyqt6, python3-serial, socat
 Description: Full-featured Serial Port Debugging Tool
- MOUSART is a full-featured serial port debugging tool built with Qt5/QML.
+ MOUSART is a full-featured serial port debugging tool built with PyQt6.
  It supports multiple data formats, virtual serial ports, auto-reply,
  data analysis, and more.
  .

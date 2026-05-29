@@ -9,9 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** est un débogueur de port série complet construit avec Qt5/QML, conçu pour le développement embarqué, le débogage matériel et la communication série. La version 2.0 ajoute la réponse automatique, le support du protocole Modbus, les commandes rapides, l'enregistrement et l'export de données, le contrôle des pins, le support multi-encodage et des dizaines de fonctionnalités professionnelles.
+**MOUSART** est un débogueur de port série complet construit avec Python/PyQt6, conçu pour le développement embarqué, le débogage matériel et la communication série. La version 3.0 est une réécriture complète en Python qui ajoute la réponse automatique, le support du protocole Modbus, les commandes rapides, l'enregistrement et l'export de données, le contrôle des pins, le support multi-encodage et des dizaines de fonctionnalités professionnelles.
 
 ---
 
@@ -72,14 +74,6 @@
 
 ---
 
-## Capture d'écran
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="Interface de débogage MOUSART">
-  <br>
-  <em>Interface de débogage série MOUSART (thème clair)</em>
-</div>
-
 ---
 
 ## Démarrage rapide
@@ -90,36 +84,45 @@ Télécharger depuis [GitHub Releases](https://github.com/kryntx/MOUSART/release
 
 | Plateforme | Fichier | Taille |
 |------------|---------|--------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Installation Debian/Ubuntu (Recommandé)
 ```bash
 # Télécharger et installer le paquet deb (les dépendances sont gérées automatiquement)
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
-
-> **Dépendances d'exécution Linux** : Le binaire précompilé nécessite les bibliothèques d'exécution Qt5 QML :
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
 
 ### Compiler depuis les sources
 
 ```bash
-# Ubuntu/Debian
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+# Ubuntu/Debian dépendances
+sudo apt install python3-pyqt6 python3-serial socat
 
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/MOUSART
+
+# Installer les dépendances Python
+pip3 install PyQt6 pyserial
+
+# Exécuter
+python3 -m mousart
+```
+
+#### Construire l'EXE Windows
+
+```bash
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# Sortie : dist/MOUSART.exe
+```
+
+#### Construire le paquet Debian
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -168,6 +171,15 @@ cmake --build build
 ---
 
 ## Journal des modifications
+
+### v3.0.0 (2026-05-29)
+**Réécriture complète - Version Python/PyQt6**
+
+- Réécriture complète en Python, migration de C++/Qt5/QML vers Python/PyQt6
+- Structure de code plus simple, plus facile à maintenir et étendre
+- Toutes les fonctionnalités v2.0.0 entièrement conservées
+- Support multiplateforme optimisé (Windows EXE + Linux deb)
+- Nouveau design d'icône d'application
 
 ### v2.0.0 (2026-05-29)
 Contrôle des pins, réponse automatique, commandes rapides, multi-encodage, Modbus RTU, export de journal, statistiques RX/TX, filtrage de données, gestion de profils, outils de somme de contrôle, séquence d'envoi

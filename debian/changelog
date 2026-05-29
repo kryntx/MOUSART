@@ -1,13 +1,15 @@
-mouserial (2.0.0-1) unstable; urgency=medium
+mouserial (3.0.0-1) unstable; urgency=medium
 
-  * Initial release
+  * Version 3.0.0 - Complete rewrite in Python/PyQt6
   * Full-featured serial port debugging tool
   - Multiple data display formats (ASCII, HEX, Decimal, Binary)
   - Virtual serial port support (socat-based)
   - Auto-reply functionality
   - Data analysis (Modbus, checksums)
   - Quick command bar
-  - Log export
-  - Dark/Light theme support
+  - Log export with auto-recording and file rotation
+  - Dark/Light theme support with font scaling
+  - Profile management
+  - Pin control (DTR/RTS/CTS/DSR/DCD/RI)
 
  -- kryntx <kryntx@users.noreply.github.com>  Thu, 29 May 2026 00:00:00 +0000

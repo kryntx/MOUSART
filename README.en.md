@@ -9,11 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
-[![Toolchain](https://img.shields.io/badge/toolchain-Qt5%20%7C%20CMake-green)](https://www.qt.io/)
-[![C++](https://img.shields.io/badge/C%2B%2B-17-blue)](https://isocpp.org/)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 
-**MOUSART** is a full-featured serial port debugging tool built with Qt5/QML, designed for embedded development, hardware debugging, and serial communication. Version 2.0 adds auto-reply, Modbus protocol support, quick commands, data recording & export, pin control, multi-encoding support, and dozens of professional features.
+**MOUSART** is a full-featured serial port debugging tool built with Python/PyQt6, designed for embedded development, hardware debugging, and serial communication. Version 3.0 is a complete rewrite in Python, migrated from C++/Qt5/QML. All v2.0 features preserved: auto-reply, Modbus protocol support, quick commands, data recording & export, pin control, multi-encoding support, and dozens of professional features.
 
 ---
 
@@ -87,21 +87,6 @@
 
 ---
 
-## Screenshots
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="MOUSART Debug Interface">
-  <br>
-  <em>MOUSART Serial Debug Interface (Light Theme)</em>
-</div>
-<div align="center">
-  <img src="img/v1.png" width="800" alt="MOUSART Virtual Port Interface">
-  <br>
-  <em>MOUSART Virtual Port Interface (Light Theme)</em>
-</div>
-
----
-
 ## Quick Start
 
 ### Pre-built Releases
@@ -110,64 +95,43 @@ Download from [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
 
 | Platform | File | Size |
 |----------|------|------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Debian/Ubuntu Install (Recommended)
 ```bash
 # Download and install deb package (dependencies handled automatically)
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
 
-> Windows version includes all Qt5 runtime dependencies. Extract and run. Hardware serial debug fully functional; virtual serial port is Linux-only.
-
-> **Linux runtime dependencies**: The pre-built Linux binary requires Qt5 QML runtime libraries:
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
+> Windows version: Single exe, double-click to run. Hardware serial debug fully functional; virtual serial port is Linux-only.
 
 ### Build from Source
-
-#### Requirements
-- Qt 5 (Core, Gui, Qml, Quick, Widgets, SerialPort)
-- CMake >= 3.16
-- C++17 compiler
-- socat (Linux, for virtual serial port only)
-
-#### Linux Build
 
 ```bash
 # Ubuntu/Debian dependencies
 sudo apt update
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+sudo apt install python3-pyqt6 python3-serial socat
 
-# Clone and build
+# Clone and run
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-
-# Run
-./build/MOUSART
+pip3 install PyQt6 pyserial
+python3 -m mousart
 ```
 
-#### Windows Cross-Compile (Linux -> Windows)
-
+#### Build Windows EXE
 ```bash
-sudo apt install mingw-w64
-pip3 install aqtinstall
-aqt install-qt windows desktop 5.15.2 win64_mingw81 -O qt5-win
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# Output: dist/MOUSART.exe
+```
 
-cmake -B build-win \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake \
-  -DCMAKE_PREFIX_PATH=qt5-win/5.15.2/mingw81_64 \
-  -DCMAKE_BUILD_TYPE=Release
-cmake --build build-win
+#### Build Debian Package
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -247,31 +211,43 @@ cmake --build build-win
 
 ```
 MOUSART/
-├── CMakeLists.txt                   # CMake build config (v2.0.0)
-├── qml.qrc                          # QML resource file
-├── cmake/
-│   └── mingw-w64-toolchain.cmake    # MinGW-w64 cross-compile toolchain
-├── img/                             # Screenshots
-├── src/                             # C++ source code
-│   ├── main.cpp                     # Entry point
-│   └── core/                        # Core modules
-│       ├── thememanager.h/.cpp      # Theme & font scaling
-│       ├── serialportmanager.h/.cpp # Serial I/O, pin control, auto-reply, stats
-│       ├── virtualserialmanager.h/.cpp # Virtual port (socat-based)
-│       ├── configmanager.h/.cpp     # Config, quick commands, profiles
-│       ├── dataanalyzer.h/.cpp      # Encoding, checksums, Modbus, conversion
-│       └── logfilemanager.h/.cpp    # Log save, export, auto-recording
-└── qml/                             # QML UI code
-    ├── main.qml                     # Main window (frameless)
-    ├── TitleBar.qml                 # Title bar
-    ├── SettingsPanel.qml            # Left panel (config, pins, auto-reply, profiles)
-    ├── DataPanel.qml                # Right panel (log, send, Modbus, quick commands)
-    └── components/                  # Reusable QML components
+├── pyproject.toml                   # Python project config
+├── pyinstaller.spec                 # PyInstaller packaging
+├── Makefile                         # Build automation
+├── scripts/                         # Build scripts
+├── resources/icons/                 # App icons
+├── mousart/                         # Python source
+│   ├── __main__.py                  # Entry point
+│   ├── app.py                       # Application bootstrap
+│   ├── core/                        # Backend managers
+│   │   ├── theme_manager.py         # Theme + font scaling
+│   │   ├── serial_manager.py        # Serial I/O via pyserial
+│   │   ├── virtual_serial_manager.py # Virtual port (socat)
+│   │   ├── config_manager.py        # Config, profiles
+│   │   ├── data_analyzer.py         # Encoding, checksums, Modbus
+│   │   └── log_file_manager.py      # Log save/export/record
+│   ├── ui/                          # PyQt6 UI
+│   │   ├── main_window.py           # Frameless window
+│   │   ├── title_bar.py             # Title bar
+│   │   ├── settings_panel.py        # Left sidebar
+│   │   ├── data_panel.py            # Right data area
+│   │   └── widgets/                 # Reusable widgets
+│   └── utils/                       # Utilities
+└── debian/                          # Debian packaging
 ```
 
 ---
 
 ## Changelog
+
+### v3.0.0 (2026-05-29)
+**Complete rewrite - Python/PyQt6 version**
+
+- Complete rewrite in Python, migrated from C++/Qt5/QML to Python/PyQt6
+- Cleaner codebase, easier to maintain and extend
+- All v2.0.0 features preserved
+- Optimized cross-platform support (Windows EXE + Linux deb)
+- New application icon design
 
 ### v2.0.0 (2026-05-29)
 **Major feature update**
@@ -311,7 +287,7 @@ MOUSART/
 ## FAQ
 
 **Q: Why can't I open the port?**
-A: Usually a permissions issue. Try `sudo ./build/MOUSART` or add your user to the `dialout` group:
+A: Usually a permissions issue. Try `sudo python3 -m mousart` or add your user to the `dialout` group:
 ```bash
 sudo usermod -aG dialout $USER
 ```

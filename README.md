@@ -9,11 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
-[![Toolchain](https://img.shields.io/badge/toolchain-Qt5%20%7C%20CMake-green)](https://www.qt.io/)
-[![C++](https://img.shields.io/badge/C%2B%2B-17-blue)](https://isocpp.org/)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** 是一款基于 Qt5/QML 构建的全功能串口调试工具，专为嵌入式开发、硬件调试和串口通信场景设计。v2.0 新增了自动应答、Modbus 协议支持、快捷命令、数据录制与导出、引脚控制、多编码支持等数十项专业功能。
+**MOUSART** 是一款基于 Python/PyQt6 构建的全功能串口调试工具，专为嵌入式开发、硬件调试和串口通信场景设计。v3.0 为完全重构版本，采用 Python 重写，支持 Windows 和 Linux 双平台，包含自动应答、Modbus 协议支持、快捷命令、数据录制与导出、引脚控制、多编码支持等数十项专业功能。
 
 ---
 
@@ -100,58 +100,51 @@
 
 从 [GitHub Releases](https://github.com/kryntx/MOUSART/releases) 下载：
 
-| 平台 | 下载文件 | 大小 |
+| 平台 | 下载文件 | 说明 |
 |------|---------|------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | Debian/Ubuntu 安装包 |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | 单文件便携版 |
 
 #### Debian/Ubuntu 安装 (推荐)
 ```bash
 # 下载并安装 deb 包（自动处理依赖）
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
 
-> Windows 版本已包含所有运行时依赖，解压即可运行。
+> Windows 版本为单文件 exe，双击即可运行，无需安装。
 
-> **Linux 运行依赖**：预构建版本需要系统安装 Qt5 QML 运行时库：
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
-
-### 从源码构建
+### 从源码运行
 
 ```bash
 # Ubuntu/Debian 依赖安装
 sudo apt update
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+sudo apt install python3-pyqt6 python3-serial socat
 
-# 克隆并编译
+# 克隆项目
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+
+# 安装 Python 依赖
+pip3 install PyQt6 pyserial
 
 # 运行
-./build/MOUSART
+python3 -m mousart
 ```
 
-#### Windows 交叉编译
+#### 构建 Windows EXE
 
 ```bash
-sudo apt install mingw-w64
-pip3 install aqtinstall
-aqt install-qt windows desktop 5.15.2 win64_mingw81 -O qt5-win
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# 输出: dist/MOUSART.exe
+```
 
-cmake -B build-win \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-toolchain.cmake \
-  -DCMAKE_PREFIX_PATH=qt5-win/5.15.2/mingw81_64 \
-  -DCMAKE_BUILD_TYPE=Release
-cmake --build build-win
+#### 构建 Debian 包
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -223,37 +216,61 @@ cmake --build build-win
 
 ```
 MOUSART/
-├── CMakeLists.txt                   # CMake 构建配置
-├── qml.qrc                          # QML 资源文件
-├── cmake/                           # 交叉编译工具链
-├── img/                             # 截图
-├── src/                             # C++ 源代码
-│   ├── main.cpp                     # 入口点
-│   └── core/                        # 核心模块
-│       ├── thememanager.h/.cpp      # 主题管理
-│       ├── serialportmanager.h/.cpp # 串口 I/O、引脚、自动应答、统计
-│       ├── virtualserialmanager.h/.cpp # 虚拟串口
-│       ├── configmanager.h/.cpp     # 配置管理、Profile
-│       ├── dataanalyzer.h/.cpp      # 编码、校验和、Modbus
-│       └── logfilemanager.h/.cpp    # 日志保存、导出
-└── qml/                             # QML 界面
-    ├── main.qml                     # 主窗口
-    ├── TitleBar.qml                 # 标题栏
-    ├── SettingsPanel.qml            # 左侧设置面板
-    ├── DataPanel.qml                # 右侧数据面板
-    └── components/                  # 可复用组件
+├── pyproject.toml                   # Python 项目配置
+├── pyinstaller.spec                 # PyInstaller 打包配置
+├── Makefile                         # 构建自动化
+├── scripts/                         # 构建脚本
+│   ├── build_exe.sh                 # Windows EXE 构建
+│   ├── build_deb.sh                 # Debian 包构建
+│   └── build_icons.sh              # 图标生成
+├── resources/icons/                 # 应用图标
+│   ├── mousart.svg                  # 源 SVG 图标
+│   └── mousart_*.png               # 各尺寸 PNG
+├── mousart/                         # Python 源代码
+│   ├── __main__.py                  # 入口点
+│   ├── app.py                       # 应用启动
+│   ├── core/                        # 核心模块
+│   │   ├── theme_manager.py         # 主题管理
+│   │   ├── serial_manager.py        # 串口 I/O、引脚、自动应答
+│   │   ├── virtual_serial_manager.py # 虚拟串口
+│   │   ├── config_manager.py        # 配置管理、Profile
+│   │   ├── data_analyzer.py         # 编码、校验和、Modbus
+│   │   └── log_file_manager.py      # 日志保存、导出
+│   ├── ui/                          # 界面模块
+│   │   ├── main_window.py           # 主窗口
+│   │   ├── title_bar.py             # 标题栏
+│   │   ├── settings_panel.py        # 左侧设置面板
+│   │   ├── data_panel.py            # 右侧数据面板
+│   │   ├── widgets/                 # 可复用组件
+│   │   └── dialogs/                 # 对话框
+│   └── utils/                       # 工具模块
+│       ├── constants.py             # 常量定义
+│       ├── encoding.py              # 编码转换
+│       ├── checksum.py              # 校验和计算
+│       ├── modbus.py                # Modbus 帧构建/解析
+│       ├── number_convert.py        # 进制转换
+│       ├── hex_display.py           # HEX 显示格式化
+│       └── stylesheet.py            # QSS 样式生成
+└── debian/                          # Debian 打包配置
 ```
 
 ---
 
 ## 更新日志
 
+### v3.0.0 (2026-05-29)
+**完全重构 - Python/PyQt6 版本**
+
+- 完全使用 Python 重写，从 C++/Qt5/QML 迁移到 Python/PyQt6
+- 更简洁的代码结构，更易于维护和扩展
+- 保持所有 v2.0.0 功能完整
+- 优化跨平台支持（Windows EXE + Linux deb）
+- 新增应用图标设计
+
 ### v2.0.0 (2026-05-29)
 **重大功能更新**
 
 新增：引脚控制、自动应答、快捷命令栏、多编码支持、发送换行控制、文件发送、Modbus RTU 帧构建器与解析器、日志保存导出、RX/TX 实时统计、数据过滤、配置管理、校验和工具、发送序列/队列、发送次数限制
-
-改进：波特率预设扩展至 300-921600，日志上限提升至 2000，虚拟串口新增编码和统计支持
 
 ### v1.0.0 (2026-05-27)
 - 初始发布

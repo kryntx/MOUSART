@@ -9,9 +9,11 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-2.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Toolchain](https://img.shields.io/badge/toolchain-PyQt6%20%7C%20Python-green)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
 
-**MOUSART** ist ein vollständiger serieller Port-Debugger, der mit Qt5/QML erstellt wurde und für Embedded-Entwicklung, Hardware-Debugging und serielle Kommunikation konzipiert ist. Version 2.0 fügt Auto-Reply, Modbus-Protokollunterstützung, Schnellbefehle, Datenaufzeichnung & Export, Pin-Steuerung, Multi-Encoding-Unterstützung und dutzende professionelle Funktionen hinzu.
+**MOUSART** ist ein vollständiger serieller Port-Debugger, der mit Python/PyQt6 erstellt wurde und für Embedded-Entwicklung, Hardware-Debugging und serielle Kommunikation konzipiert ist. Version 3.0 ist eine vollständige Python-Neuimplementierung und fügt Auto-Reply, Modbus-Protokollunterstützung, Schnellbefehle, Datenaufzeichnung & Export, Pin-Steuerung, Multi-Encoding-Unterstützung und dutzende professionelle Funktionen hinzu.
 
 ---
 
@@ -72,14 +74,6 @@
 
 ---
 
-## Screenshots
-
-<div align="center">
-  <img src="img/d1.png" width="800" alt="MOUSART Debug-Oberfläche">
-  <br>
-  <em>MOUSART Seriell-Debug-Oberfläche (Helles Thema)</em>
-</div>
-
 ---
 
 ## Schnellstart
@@ -90,36 +84,45 @@ Download bei [GitHub Releases](https://github.com/kryntx/MOUSART/releases):
 
 | Plattform | Datei | Größe |
 |-----------|-------|-------|
-| **Linux x86_64 (deb)** | `mouserial_2.0.0-1_amd64.deb` | ~82KB |
-| **Linux x86_64** | `MOUSART-v2.0.0-linux-x86_64.tar.gz` | ~105KB |
-| **Windows x86_64** | `MOUSART-v2.0.0-windows-x86_64.zip` | ~23MB |
+| **Linux x86_64 (deb)** | `mouserial_3.0.0-1_amd64.deb` | ~82KB |
+| **Windows x86_64** | `MOUSART-v3.0.0-windows-x86_64.exe` | ~23MB |
 
 #### Debian/Ubuntu-Installation (Empfohlen)
 ```bash
 # deb-Paket herunterladen und installieren (Abhängigkeiten werden automatisch behandelt)
-wget https://github.com/kryntx/MOUSART/releases/download/v2.0.0/mouserial_2.0.0-1_amd64.deb
-sudo apt install ./mouserial_2.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.0.0-1_amd64.deb
 ```
-
-> **Linux-Laufzeitabhängigkeiten**: Die vorgefertigte Binärdatei benötigt Qt5 QML-Laufzeitbibliotheken:
-> ```bash
-> sudo apt install qtdeclarative5-dev libqt5serialport5-dev \
->   qml-module-qtquick2 qml-module-qtquick-controls2 \
->   qml-module-qtquick-layouts qml-module-qtquick-window2 \
->   qml-module-qtquick-templates2 qml-module-qtqml-models2
-> ```
 
 ### Aus dem Quellcode bauen
 
 ```bash
-# Ubuntu/Debian
-sudo apt install qtbase5-dev qtdeclarative5-dev libqt5serialport5-dev cmake socat
+# Ubuntu/Debian Abhängigkeiten
+sudo apt install python3-pyqt6 python3-serial socat
 
 git clone https://github.com/kryntx/MOUSART.git
 cd MOUSART
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/MOUSART
+
+# Python-Abhängigkeiten installieren
+pip3 install PyQt6 pyserial
+
+# Ausführen
+python3 -m mousart
+```
+
+#### Windows EXE erstellen
+
+```bash
+pip3 install pyinstaller
+pyinstaller pyinstaller.spec --noconfirm
+# Ausgabe: dist/MOUSART.exe
+```
+
+#### Debian-Paket erstellen
+
+```bash
+sudo apt install dh-python python3-setuptools debhelper
+dpkg-buildpackage -us -uc -b
 ```
 
 ---
@@ -169,6 +172,15 @@ cmake --build build
 
 ## Änderungsprotokoll
 
+### v3.0.0 (2026-05-29)
+**Vollständige Neuimplementierung - Python/PyQt6-Version**
+
+- Vollständige Python-Neuimplementierung, Migration von C++/Qt5/QML zu Python/PyQt6
+- Einfachere Code-Struktur, leichter zu warten und erweitern
+- Alle v2.0.0-Funktionen vollständig erhalten
+- Optimierte plattformübergreifende Unterstützung (Windows EXE + Linux deb)
+- Neues Anwendungsicon-Design
+
 ### v2.0.0 (2026-05-29)
 Pin-Steuerung, Auto-Reply, Schnellbefehle, Multi-Encoding, Modbus RTU, Log-Export, RX/TX-Statistiken, Datenfilterung, Profilverwaltung, Prüfsummen-Tools, Sendesequenz
 
@@ -179,7 +191,7 @@ Erstveröffentlichung
 
 ## FAQ
 
-**Q: Port kann nicht geöffnet werden?** Meist ein Berechtigungsproblem. `sudo` verwenden oder Benutzer zur `dialout`-Gruppe hinzufügen.
+**Q: Port kann nicht geöffnet werden?** Meist ein Berechtigungsproblem. `sudo python3 -m mousart` verwenden oder Benutzer zur `dialout`-Gruppe hinzufügen.
 
 **Q: Virtueller Port funktioniert nicht?** `socat` installieren: `sudo apt install socat`
 

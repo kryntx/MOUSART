@@ -1,7 +1,18 @@
-# CMake build
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# Build
 build/
 build-win/
 obj-x86_64-linux-gnu/
+
+# PyInstaller
+*.spec.bak
 
 # Cross-compilation Qt5 libraries
 qt5-win/
