@@ -1,4 +1,5 @@
 """Hardware serial port management using pyserial."""
+import grp
 import os
 import threading
 import time
@@ -36,6 +37,7 @@ class SerialPortManager(QObject):
     auto_save_path_changed = pyqtSignal()
     send_sequence_active_changed = pyqtSignal()
     send_sequence_completed = pyqtSignal()
+    permission_error = pyqtSignal(str, bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -178,25 +180,37 @@ class SerialPortManager(QObject):
     def cts(self):
         if not self.isOpen:
             return False
-        return self._port.cts
+        try:
+            return self._port.cts
+        except OSError:
+            return False
 
     @pyqtProperty(bool, notify=pin_states_changed)
     def dsr(self):
         if not self.isOpen:
             return False
-        return self._port.dsr
+        try:
+            return self._port.dsr
+        except OSError:
+            return False
 
     @pyqtProperty(bool, notify=pin_states_changed)
     def dcd(self):
         if not self.isOpen:
             return False
-        return self._port.cd
+        try:
+            return self._port.cd
+        except OSError:
+            return False
 
     @pyqtProperty(bool, notify=pin_states_changed)
     def ri(self):
         if not self.isOpen:
             return False
-        return self._port.ri
+        try:
+            return self._port.ri
+        except OSError:
+            return False
 
     # Stats
     @pyqtProperty(int, notify=stats_changed)
@@ -413,9 +427,50 @@ class SerialPortManager(QObject):
             self.pin_states_changed.emit()
             return True
 
+        except PermissionError as e:
+            has_perm, in_dialout, msg = SerialPortManager.check_port_permission(port_name)
+            self.permission_error.emit(msg, in_dialout)
+            self.error_occurred.emit(str(e))
+            return False
+
         except Exception as e:
             self.error_occurred.emit(str(e))
             return False
+
+    @staticmethod
+    def check_port_permission(port_name: str) -> tuple:
+        """Check if the current user has permission to access the given port.
+
+        Returns:
+            tuple: (has_permission, in_dialout_group, message)
+        """
+        has_permission = os.access(port_name, os.R_OK | os.W_OK)
+
+        in_dialout = False
+        try:
+            dialout_info = grp.getgrnam("dialout")
+            current_groups = os.getgroups()
+            in_dialout = dialout_info.gr_gid in current_groups
+        except (KeyError, OSError):
+            pass
+
+        if has_permission:
+            return (True, in_dialout, "")
+
+        if in_dialout:
+            msg = (
+                f"Permission denied: cannot access {port_name}\n"
+                f"You are in the dialout group but still lack access.\n"
+                f"The device may be owned by a different group."
+            )
+        else:
+            msg = (
+                f"Permission denied: cannot access {port_name}\n"
+                f"You are NOT in the dialout group.\n"
+                f"Fix: sudo usermod -aG dialout $USER"
+            )
+
+        return (False, in_dialout, msg)
 
     @pyqtSlot()
     def closePort(self):

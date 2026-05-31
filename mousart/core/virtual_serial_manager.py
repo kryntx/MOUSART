@@ -1,5 +1,6 @@
 """Virtual serial port management via socat (Linux only)."""
 import os
+import shutil
 import sys
 import subprocess
 import threading
@@ -27,6 +28,7 @@ class VirtualSerialManager(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._socat_available = shutil.which("socat") is not None
         self._socat_proc = None
         self._pty_a = ""
         self._pty_b = ""
@@ -140,6 +142,25 @@ class VirtualSerialManager(QObject):
             return
         self._receive_encoding = v
         self.receive_encoding_changed.emit()
+
+    @pyqtProperty(bool)
+    def socatAvailable(self):
+        return self._socat_available
+
+    @staticmethod
+    def get_install_command() -> str:
+        """Return the distro-appropriate install command for socat."""
+        try:
+            with open("/etc/os-release", "r") as f:
+                content = f.read().lower()
+            if "arch" in content:
+                return "sudo pacman -S socat"
+            elif any(id_str in content for id_str in ("centos", "rhel", "red hat", "fedora")):
+                return "sudo yum install socat"
+            else:
+                return "sudo apt install socat"
+        except OSError:
+            return "sudo apt install socat"
 
     @pyqtSlot(result=bool)
     def startVirtualPort(self):

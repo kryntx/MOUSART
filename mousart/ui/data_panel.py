@@ -1,28 +1,26 @@
 """Right data area - two independent panels for Virtual Serial and Hardware Debug."""
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                               QPlainTextEdit, QLineEdit, QMenu, QSplitter,
-                               QDialog, QFormLayout, QCheckBox, QDialogButtonBox,
-                               QStackedWidget)
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer
-from PyQt6.QtGui import QAction, QTextCursor, QFont, QColor
+from mousart.qt_compat import *
 
 from mousart.ui.widgets.small_toggle import SmallToggle
 from mousart.ui.widgets.small_button import SmallButton
 from mousart.ui.widgets.quick_command_bar import QuickCommandBar
 from mousart.ui.widgets.data_stats_bar import DataStatsBar
+from mousart.ui.widgets.waveform_widget import WaveformWidget
+from mousart.ui.dialogs.waveform_dialog import WaveformDialog
 
-from mousart.utils.constants import MODBUS_FC_OPTIONS, MAX_LOG_ENTRIES
+from mousart.utils.constants import MODBUS_FC_OPTIONS, DEFAULT_MAX_LOG_ENTRIES
 from mousart.utils.hex_display import bytes_to_hex
 from datetime import datetime
 
 
 class LogEntry:
     """Single log entry."""
-    __slots__ = ('time', 'log_type', 'data')
-    def __init__(self, time_str, log_type, data):
+    __slots__ = ('time', 'log_type', 'data', 'raw_bytes')
+    def __init__(self, time_str, log_type, data, raw_bytes=None):
         self.time = time_str
         self.log_type = log_type
         self.data = data
+        self.raw_bytes = raw_bytes
 
 
 class SinglePanel(QWidget):
@@ -48,6 +46,10 @@ class SinglePanel(QWidget):
         self._show_modbus = False
         self._log_entries = []
         self._manager = None  # Will be set to serial_manager or virtual_manager
+        self._max_log_entries = (
+            config_manager.max_log_entries if config_manager
+            else DEFAULT_MAX_LOG_ENTRIES
+        )
 
         self._build_ui()
 
@@ -91,6 +93,10 @@ class SinglePanel(QWidget):
         self._pause_toggle.toggled_custom.connect(lambda v: setattr(self, '_pause_display', v))
         recv_toolbar.addWidget(self._pause_toggle)
 
+        self._waveform_toggle = SmallToggle("波形", theme_manager=self._theme_manager)
+        self._waveform_toggle.toggled_custom.connect(self._toggle_waveform)
+        recv_toolbar.addWidget(self._waveform_toggle)
+
         sep = QWidget()
         sep.setFixedSize(1, 14)
         sep.setStyleSheet("background: #2a2a4a;")
@@ -125,11 +131,18 @@ class SinglePanel(QWidget):
         # Log view
         self._log_view = QPlainTextEdit()
         self._log_view.setReadOnly(True)
-        self._log_view.setMaximumBlockCount(MAX_LOG_ENTRIES)
+        self._log_view.setMaximumBlockCount(self._max_log_entries)
         font = QFont("monospace")
         font.setPointSize(11)
         self._log_view.setFont(font)
+        self._log_view.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         recv_layout.addWidget(self._log_view, 1)
+
+        # Real-time waveform widget (hidden by default)
+        self._waveform_widget = WaveformWidget(theme_manager=self._theme_manager)
+        self._waveform_widget.set_realtime(True)
+        self._waveform_widget.setVisible(False)
+        recv_layout.addWidget(self._waveform_widget)
 
         splitter.addWidget(recv_widget)
 
@@ -226,6 +239,9 @@ class SinglePanel(QWidget):
         # Keyboard shortcut
         self._send_text.installEventFilter(self)
 
+        # Log view click handler for waveform popup
+        self._log_view.viewport().installEventFilter(self)
+
     def _build_modbus_panel(self):
         widget = QWidget()
         layout = QHBoxLayout(widget)
@@ -266,13 +282,41 @@ class SinglePanel(QWidget):
             if event.key() == Qt.Key.Key_Return and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self._do_send()
                 return True
+        # Click on log view to open waveform dialog
+        if obj == self._log_view.viewport() and event.type() == event.Type.MouseButtonPress:
+            if event.button() == Qt.MouseButton.LeftButton:
+                try:
+                    cursor = self._log_view.cursorForPosition(event.pos())
+                    line_number = cursor.blockNumber()
+                    self._on_log_line_clicked(line_number)
+                except Exception:
+                    pass
+                return False
         return super().eventFilter(obj, event)
 
-    def add_log_entry(self, log_type, data):
-        """Add a log entry to this panel."""
+    def set_max_log_entries(self, value: int):
+        """Update the maximum log entries limit at runtime."""
+        self._max_log_entries = value
+        self._log_view.setMaximumBlockCount(value)
+        # Trim in-memory list if it now exceeds the new limit
+        if len(self._log_entries) > value:
+            self._log_entries = self._log_entries[-value:]
+
+    def add_log_entry(self, log_type, data, raw_bytes=None, display_html=None):
+        """Add a log entry to this panel.
+
+        Args:
+            display_html: Optional pre-formatted HTML for the data portion.
+                          When provided, used instead of plain-text escaping of `data`.
+                          The plain `data` is still stored in the LogEntry for export.
+        """
         ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        entry = LogEntry(ts, log_type, data)
+        entry = LogEntry(ts, log_type, data, raw_bytes)
         self._log_entries.append(entry)
+
+        # Trim in-memory list when it exceeds the configured limit
+        if len(self._log_entries) > self._max_log_entries:
+            self._log_entries = self._log_entries[-self._max_log_entries:]
 
         if not self._pause_display:
             color_map = {"RX": "#4ec9b0", "TX": "#569cd6", "ERR": "#f44747", "INFO": "#dcdcaa", "SYS": "#9cdcfe"}
@@ -285,7 +329,10 @@ class SinglePanel(QWidget):
                 parts.append(f'<span style="color:#8899aa;">{ts}</span>')
             if self._show_direction:
                 parts.append(f'<span style="color:{color};font-weight:bold;">{direction}</span>')
-            parts.append(f'<span style="color:{color if log_type == "ERR" else "#e0e0e0"};">{data}</span>')
+            if display_html:
+                parts.append(display_html)
+            else:
+                parts.append(f'<span style="color:{color if log_type == "ERR" else "#e0e0e0"};">{data}</span>')
 
             self._log_view.appendHtml("  ".join(parts))
             cursor = self._log_view.textCursor()
@@ -299,18 +346,39 @@ class SinglePanel(QWidget):
 
     def on_data_received(self, text, raw):
         """Handle received data from serial manager."""
-        display = bytes_to_hex(raw, " ") if self._hex_display else text
-        if self._filter_text:
-            if self._data_analyzer and not self._data_analyzer.matchFilter(display, self._filter_text, self._filter_regex):
-                return
-        self.add_log_entry("RX", display)
+        try:
+            if self._hex_display:
+                hex_str = bytes_to_hex(raw, " ")
+                display = hex_str
+                # Build HEX + decoded text dual view
+                safe_text = (text.replace("&", "&amp;")
+                                 .replace("<", "&lt;")
+                                 .replace(">", "&gt;"))
+                display_html = (
+                    f'<span style="color:#e0e0e0;">{hex_str}</span>'
+                    f' <span style="color:#6a6a8a;">| {safe_text}</span>'
+                )
+            else:
+                display = text
+                display_html = None
+
+            if self._filter_text:
+                if self._data_analyzer and not self._data_analyzer.matchFilter(display, self._filter_text, self._filter_regex):
+                    return
+            self.add_log_entry("RX", display, raw_bytes=raw, display_html=display_html)
+            # Update real-time waveform
+            if self._waveform_widget.isVisible():
+                self._waveform_widget.append_data(raw)
+        except Exception:
+            pass
 
     def on_error(self, error):
         self.add_log_entry("ERR", error)
 
     def on_timed_send_completed(self, data):
         if self._echo_enabled:
-            self.add_log_entry("TX", data)
+            raw = data.encode("utf-8", errors="replace") if isinstance(data, str) else data
+            self.add_log_entry("TX", data, raw_bytes=raw)
 
     def on_port_event(self, event_type, info=""):
         if event_type == "opened":
@@ -339,7 +407,8 @@ class SinglePanel(QWidget):
         result = self._manager.sendData(text, self._hex_send)
         if result > 0 and self._echo_enabled:
             display = self._data_analyzer.textToHex(text) if self._hex_send else text
-            self.add_log_entry("TX", display)
+            raw = self._get_send_raw_bytes(text)
+            self.add_log_entry("TX", display, raw_bytes=raw)
 
     def _send_quick_command(self, data, hex_mode):
         if not self._manager:
@@ -350,7 +419,19 @@ class SinglePanel(QWidget):
         self._manager.sendData(data, hex_mode)
         if self._echo_enabled:
             display = self._data_analyzer.textToHex(data) if hex_mode else data
-            self.add_log_entry("TX", display)
+            raw = self._get_send_raw_bytes(data)
+            self.add_log_entry("TX", display, raw_bytes=raw)
+
+    def _get_send_raw_bytes(self, text):
+        """Get the raw bytes that would be sent for a given text."""
+        try:
+            if self._hex_send:
+                clean = text.replace(" ", "").replace("\n", "").replace("\r", "")
+                return bytes.fromhex(clean)
+            else:
+                return text.encode("utf-8", errors="replace")
+        except (ValueError, AttributeError):
+            return text.encode("utf-8", errors="replace")
 
     def _toggle_timed_send(self, v):
         if not self._manager:
@@ -377,6 +458,47 @@ class SinglePanel(QWidget):
     def _toggle_modbus(self, v):
         self._show_modbus = v
         self._modbus_widget.setVisible(v)
+
+    def _toggle_waveform(self, v):
+        """Toggle real-time waveform display."""
+        self._waveform_widget.setVisible(v)
+        if not v:
+            self._waveform_widget.clear()
+
+    def _on_log_line_clicked(self, line_number):
+        """Handle click on a log line to open waveform dialog."""
+        try:
+            if line_number < 0:
+                return
+            # Map block number to _log_entries index
+            # When _log_entries exceeds the limit, old blocks are removed
+            # from _log_view and _log_entries is trimmed to match
+            entry_count = len(self._log_entries)
+            block_count = self._log_view.blockCount()
+            if block_count < entry_count:
+                offset = entry_count - block_count
+                idx = offset + line_number
+            else:
+                idx = line_number
+            if idx < 0 or idx >= entry_count:
+                return
+            entry = self._log_entries[idx]
+            if entry.log_type not in ("RX", "TX"):
+                return
+            if not entry.raw_bytes:
+                return
+
+            dialog = WaveformDialog(
+                parent=self,
+                theme_manager=self._theme_manager,
+                data=entry.raw_bytes,
+                direction=entry.log_type,
+                timestamp=entry.time,
+                text_display=entry.data
+            )
+            dialog.exec()
+        except Exception:
+            pass
 
     def _send_file(self):
         if self._log_file_manager and self._manager and hasattr(self._manager, 'sendFileData'):
@@ -527,6 +649,7 @@ class SinglePanel(QWidget):
                 border-radius: 6px;
             }}
         """)
+        self._waveform_widget.set_theme_manager(theme_manager)
         for toggle in self.findChildren(SmallToggle):
             toggle.set_theme_manager(theme_manager)
         for btn in self.findChildren(SmallButton):

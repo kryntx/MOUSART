@@ -9,7 +9,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-blue)](https://github.com/kryntx/MOUSART/releases)
-[![Release](https://img.shields.io/badge/version-3.0.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.0.0)
+[![Release](https://img.shields.io/badge/version-3.1.0-brightgreen)](https://github.com/kryntx/MOUSART/releases/tag/v3.1.0)
 
 **MOUSART** 是一款全功能串口调试工具，专为嵌入式开发、硬件调试和串口通信场景设计。支持串口调试和虚拟串口两种独立模式，具备自动应答、Modbus 协议支持、快捷命令、数据录制与导出、引脚控制、多编码支持等数十项专业功能。
 
@@ -70,14 +70,29 @@
 - 关键字 / 正则表达式过滤
 
 ### 数据记录
-- 一键保存日志到 TXT / CSV
+- 一键保存日志到 TXT / CSV / HEX
 - 自动录制（10MB/文件自动分割）
 - 实时 RX/TX 字节计数和速率显示
+- 可配置日志缓存上限（1000~100000 条）
+- 导出文件自动附带串口参数元信息
+
+### 波形显示
+- UART 串口协议波形（起始位 + 数据位 + 停止位）
+- 点击日志条目弹出波形窗口（支持滚轮缩放、拖拽平移）
+- 实时接收数据波形显示（工具栏「波形」按钮）
 
 ### 界面
-- 深色/浅色双主题
-- 0.8x-1.5x 字体缩放
+- 5 套内置主题（深色、浅色、Solarized、Monokai、高对比）
+- 0.8x-2.0x 字体缩放
+- 窗口布局自动保存与恢复
+- 侧边栏可折叠
 - 配置管理（Profile）
+
+### 兼容性
+- Linux 权限自动检测（dialout 组引导提示）
+- socat 依赖自动检测（对应发行版安装命令）
+- 编码自动识别（UTF-8/GBK 启发式检测）
+- PyQt5/PyQt6 双版本兼容
 
 ---
 
@@ -89,10 +104,10 @@
 
 ```bash
 # 1. 下载 deb 包
-wget https://github.com/kryntx/MOUSART/releases/download/v3.0.0/mouserial_3.0.0-1_amd64.deb
+wget https://github.com/kryntx/MOUSART/releases/download/v3.1.0/mouserial_3.1.0-1_amd64.deb
 
 # 2. 安装（自动安装依赖）
-sudo apt install ./mouserial_3.0.0-1_amd64.deb
+sudo apt install ./mouserial_3.1.0-1_amd64.deb
 
 # 3. 运行
 mousart
@@ -103,7 +118,7 @@ mousart
 ```bash
 # 1. 安装系统依赖
 sudo apt update
-sudo apt install python3-pyqt5 python3-serial socat git
+sudo apt install python3-pyqt6 python3-serial socat git
 
 # 2. 克隆项目
 git clone https://github.com/kryntx/MOUSART.git
@@ -120,7 +135,7 @@ python3 -m mousart
 sudo apt install socat
 
 # 2. 安装 Python 依赖
-pip3 install PyQt5 pyserial
+pip3 install PyQt6 pyserial
 
 # 3. 克隆并运行
 git clone https://github.com/kryntx/MOUSART.git
@@ -245,14 +260,14 @@ rm -rf ~/mousart_logs
 ## 常见问题
 
 **Q: 无法打开串口？**
-A: 通常是权限问题，将用户添加到 `dialout` 组：
+A: 通常是权限问题。v3.1.0 会自动检测并弹出引导对话框，也可手动修复：
 ```bash
 sudo usermod -aG dialout $USER
 # 注销并重新登录生效
 ```
 
 **Q: 虚拟串口无法使用？**
-A: 请确保已安装 `socat`：
+A: v3.1.0 会自动检测 socat 并显示安装命令。也可手动安装：
 ```bash
 sudo apt install socat
 ```

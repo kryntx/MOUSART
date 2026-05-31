@@ -3,7 +3,7 @@ import json
 import os
 from mousart.qt_compat import *
 
-from mousart.utils.constants import DEFAULT_QUICK_COMMANDS
+from mousart.utils.constants import DEFAULT_QUICK_COMMANDS, DEFAULT_MAX_LOG_ENTRIES
 
 
 class ConfigManager(QObject):
@@ -49,6 +49,20 @@ class ConfigManager(QObject):
         self._current_profile = profile
         self._settings.setValue("currentProfile", profile)
         self.current_profile_changed.emit()
+
+    @property
+    def max_log_entries(self) -> int:
+        val = self._settings.value("maxLogEntries", DEFAULT_MAX_LOG_ENTRIES)
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return DEFAULT_MAX_LOG_ENTRIES
+
+    @max_log_entries.setter
+    def max_log_entries(self, value: int):
+        if self.max_log_entries == value:
+            return
+        self._settings.setValue("maxLogEntries", value)
 
     def get_profiles(self) -> list:
         result = ["default"]

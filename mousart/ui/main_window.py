@@ -37,14 +37,22 @@ class MainWindow(QMainWindow):
         self._resize_margin = 8
         self._drag_start = None
         self._drag_geom = None
+        self._settings = QSettings("MOUSART", "MOUSART")
 
         self.setWindowFlags(Qt_WindowType_FramelessWindowHint | Qt_WindowType_Window)
         self.setAttribute(Qt_WidgetAttribute_WA_TranslucentBackground)
         self.setMinimumSize(700, 500)
-        self.resize(1000, 700)
 
         self._build_ui()
         self._connect_signals()
+        self._restore_geometry()
+
+        # Debounce timer for theme application
+        self._theme_timer = QTimer(self)
+        self._theme_timer.setSingleShot(True)
+        self._theme_timer.setInterval(50)
+        self._theme_timer.timeout.connect(self._apply_theme)
+
         self._apply_theme()
 
     def _build_ui(self):
@@ -122,9 +130,21 @@ class MainWindow(QMainWindow):
         # Settings panel mode change
         self._settings_panel.mode_changed.connect(self._data_panel.set_mode)
 
-        # Theme changes
-        self._theme_manager.colors_changed.connect(self._apply_theme)
-        self._theme_manager.font_scale_changed.connect(self._apply_theme)
+        # Settings panel collapse
+        self._settings_panel.collapse_changed.connect(self._on_panel_collapse)
+
+        # Theme changes (debounced)
+        self._theme_manager.colors_changed.connect(self._schedule_theme_update)
+        self._theme_manager.font_scale_changed.connect(self._schedule_theme_update)
+
+    def _schedule_theme_update(self):
+        """Debounce theme updates to avoid rapid stylesheet changes."""
+        self._theme_timer.start()
+
+    def _on_panel_collapse(self, collapsed):
+        """Handle settings panel collapse/expand."""
+        self._settings_panel.setVisible(not collapsed)
+        self._separator.setVisible(not collapsed)
 
     def _toggle_maximize(self):
         if self._is_maximized:
@@ -138,37 +158,62 @@ class MainWindow(QMainWindow):
     def _toggle_theme(self):
         self._theme_manager.toggle_theme()
 
+    def _restore_geometry(self):
+        """Restore window geometry from QSettings."""
+        geom = self._settings.value("window/geometry")
+        if geom:
+            self.restoreGeometry(geom)
+        else:
+            self.resize(1000, 700)
+        maximized = self._settings.value("window/maximized", False, type=bool)
+        if maximized:
+            self.showMaximized()
+            self._is_maximized = True
+            self._title_bar.set_maximized(True)
+
+    def _save_geometry(self):
+        """Save window geometry to QSettings."""
+        self._settings.setValue("window/geometry", self.saveGeometry())
+        self._settings.setValue("window/maximized", self._is_maximized)
+
+    def closeEvent(self, event):
+        self._save_geometry()
+        super().closeEvent(event)
+
     def _apply_theme(self):
-        theme = self._theme_manager.theme
-        scale = self._theme_manager.fontScale
+        try:
+            theme = self._theme_manager.theme
+            scale = max(0.8, min(2.0, self._theme_manager.fontScale))
 
-        # Apply stylesheet
-        qss = generate_stylesheet(theme, scale)
-        QApplication.instance().setStyleSheet(qss)
+            # Apply stylesheet
+            qss = generate_stylesheet(theme, scale)
+            QApplication.instance().setStyleSheet(qss)
 
-        # Update container background
-        bg = self._theme_manager.get_color_hex("bgPrimary")
-        border = self._theme_manager.get_color_hex("border")
-        self._container.setStyleSheet(f"""
-            #mainContainer {{
-                background: {bg};
-                border: 1px solid {border};
-                border-radius: 12px;
-            }}
-        """)
+            # Update container background
+            bg = self._theme_manager.get_color_hex("bgPrimary")
+            border = self._theme_manager.get_color_hex("border")
+            self._container.setStyleSheet(f"""
+                #mainContainer {{
+                    background: {bg};
+                    border: 1px solid {border};
+                    border-radius: 12px;
+                }}
+            """)
 
-        # Update separator
-        self._separator.setStyleSheet(f"background: {border};")
+            # Update separator
+            self._separator.setStyleSheet(f"background: {border};")
 
-        # Update font size
-        font = QFont()
-        font.setPointSize(int(12 * scale))
-        QApplication.instance().setFont(font)
+            # Update font size
+            font = QFont()
+            font.setPointSize(max(6, int(12 * scale)))
+            QApplication.instance().setFont(font)
 
-        # Update child panels
-        self._title_bar.set_theme_manager(self._theme_manager)
-        self._settings_panel.set_theme_manager(self._theme_manager)
-        self._data_panel.set_theme_manager(self._theme_manager)
+            # Update child panels
+            self._title_bar.set_theme_manager(self._theme_manager)
+            self._settings_panel.set_theme_manager(self._theme_manager)
+            self._data_panel.set_theme_manager(self._theme_manager)
+        except Exception:
+            pass
 
     def _update_geometry(self):
         """Update layout margins based on maximized state."""

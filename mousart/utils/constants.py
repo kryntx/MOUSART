@@ -18,7 +18,7 @@ PARITY_MAP = {0: "N", 1: "O", 2: "E", 3: "M", 4: "S"}
 FLOW_CONTROL_LIST = ["None", "Hardware", "Software"]
 FLOW_MAP = {0: "none", 1: "hardware", 2: "software"}
 
-ENCODING_LIST = ["UTF-8", "GBK", "GB18030", "Latin-1", "ASCII"]
+ENCODING_LIST = ["自动 Auto", "UTF-8", "GBK", "GB18030", "Latin-1", "ASCII"]
 
 # Modbus function code names
 MODBUS_FUNC_NAMES = {
@@ -55,7 +55,10 @@ DEFAULT_QUICK_COMMANDS = [
     {"name": "Ping", "data": "FF 01 02 03", "hex": True},
 ]
 
-MAX_LOG_ENTRIES = 2000
+SOCAT_ENABLED = True
+
+DEFAULT_MAX_LOG_ENTRIES = 5000
+LOG_ENTRIES_RANGE = (1000, 100000)
 MAX_RECORD_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Modbus function code options for UI
@@ -63,5 +66,9 @@ MODBUS_FC_OPTIONS = [
     ("03 读保持寄存器", 3),
     ("04 读输入寄存器", 4),
     ("01 读线圈", 1),
+    ("02 读离散输入", 2),
     ("06 写单寄存器", 6),
+    ("05 写单线圈", 5),
+    ("10 写多寄存器", 16),
+    ("0F 写多线圈", 15),
 ]

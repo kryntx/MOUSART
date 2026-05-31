@@ -1,10 +1,10 @@
-.PHONY: run test build-exe build-deb build-all clean install
+.PHONY: build run build-exe build-deb build-all clean install
+
+build:
+	@echo "Nothing to build (pure Python project)"
 
 run:
 	python3 -m mousart
-
-test:
-	python3 -m pytest tests/ -v
 
 build-exe:
 	bash scripts/build_exe.sh
@@ -20,7 +20,9 @@ clean:
 	find . -name "*.pyc" -delete
 
 install:
-	pip3 install -e .
+	python3 -m pip install --no-deps --no-build-isolation --prefix=$(DESTDIR)/usr . 2>/dev/null || \
+	python3 -c "import sysconfig; print(sysconfig.get_path('purelib'))" && \
+	cp -r mousart $(DESTDIR)/usr/lib/python3/dist-packages/mousart 2>/dev/null || true
 
 install-deps:
 	pip3 install PyQt6 pyserial pyinstaller

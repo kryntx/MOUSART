@@ -1,3 +1,25 @@
+mouserial (3.1.0-1) unstable; urgency=medium
+
+  * Version 3.1.0 - Feature enhancements and bug fixes
+  - UART waveform visualization (click log entries to view signal waveform)
+  - Real-time waveform display toggle
+  - 5 built-in themes (Dark, Light, Solarized, Monokai, High Contrast)
+  - Configurable log cache limit (1000~100000 entries)
+  - Encoding auto-detection (UTF-8/GBK heuristic)
+  - HEX+text dual view in HEX display mode
+  - Linux dialout group permission detection with guided fix
+  - socat dependency auto-check with distro-specific install commands
+  - Window geometry and layout persistence across sessions
+  - Settings panel collapse/expand support
+  - Font scale range extended to 0.8~2.0
+  - Modbus function codes expanded (8 codes including multi-register write)
+  - Log export enhanced with HEX format and metadata header
+  - PyQt5/PyQt6 compatibility for data_panel.py
+  - Pin state read protection for virtual serial ports
+  - Theme application debounced to prevent UI crashes
+
+ -- kryntx <kryntx@users.noreply.github.com>  Sat, 31 May 2026 00:00:00 +0000
+
 mouserial (3.0.0-1) unstable; urgency=medium
 
   * Version 3.0.0 - Complete rewrite in Python/PyQt6

@@ -11,13 +11,15 @@ from mousart.ui.widgets.pin_control_bar import PinControlBar
 from mousart.ui.widgets.auto_reply_panel import AutoReplyPanel
 
 from mousart.utils.constants import (BAUD_RATES, DATA_BITS_LIST, STOP_BITS_LIST,
-                                       PARITY_LIST, FLOW_CONTROL_LIST, ENCODING_LIST)
+                                       PARITY_LIST, FLOW_CONTROL_LIST, ENCODING_LIST,
+                                       LOG_ENTRIES_RANGE)
 
 
 class SettingsPanel(QWidget):
     """Left sidebar with mode selector, serial port configuration, and profiles."""
 
     mode_changed = pyqtSignal(int)
+    collapse_changed = pyqtSignal(bool)
 
     def __init__(self, parent=None, theme_manager=None, serial_manager=None,
                  virtual_manager=None, config_manager=None):
@@ -53,6 +55,7 @@ class SettingsPanel(QWidget):
         self._build_debug_controls()
         self._build_auto_reply()
         self._build_profile_section()
+        self._build_log_settings()
         self._layout.addStretch()
         self._build_status_bar()
 
@@ -108,6 +111,18 @@ class SettingsPanel(QWidget):
         desc.setWordWrap(True)
         layout.addWidget(desc)
 
+        # socat status indicator
+        if self._virtual_manager and self._virtual_manager.socatAvailable:
+            self._socat_label = QLabel("socat ✓")
+            self._socat_label.setStyleSheet("font-size: 10px; color: #00d4aa; font-weight: bold;")
+        else:
+            install_cmd = (self._virtual_manager.get_install_command()
+                           if self._virtual_manager else "sudo apt install socat")
+            self._socat_label = QLabel(f"socat 未安装\n{install_cmd}")
+            self._socat_label.setStyleSheet("font-size: 10px; color: #f44747;")
+            self._socat_label.setWordWrap(True)
+        layout.addWidget(self._socat_label)
+
         # External port display
         self._ext_port_widget = QWidget()
         ext_layout = QVBoxLayout(self._ext_port_widget)
@@ -155,6 +170,8 @@ class SettingsPanel(QWidget):
         # Start/Stop button
         self._virtual_action_btn = ActionButton("启动 Start", theme_manager=self._theme_manager)
         self._virtual_action_btn.clicked_custom.connect(self._toggle_virtual)
+        if self._virtual_manager and not self._virtual_manager.socatAvailable:
+            self._virtual_action_btn.set_btn_enabled(False)
         layout.addWidget(self._virtual_action_btn)
 
         self._layout.addWidget(self._virtual_widget)
@@ -313,6 +330,38 @@ class SettingsPanel(QWidget):
         self._layout.addWidget(profile_widget)
         self._profile_widget = profile_widget
 
+    def _build_log_settings(self):
+        log_widget = QWidget()
+        log_layout = QVBoxLayout(log_widget)
+        log_layout.setContentsMargins(6, 6, 6, 6)
+        log_layout.setSpacing(4)
+
+        header = QLabel("日志缓存 Log Cache")
+        header.setStyleSheet("font-size: 9px; font-weight: bold; color: #8899aa;")
+        log_layout.addWidget(header)
+
+        spin_row = QHBoxLayout()
+        spin_label = QLabel("最大条目:")
+        spin_label.setStyleSheet("font-size: 10px; color: #8899aa;")
+        spin_row.addWidget(spin_label)
+
+        self._log_cache_spin = QSpinBox()
+        self._log_cache_spin.setRange(LOG_ENTRIES_RANGE[0], LOG_ENTRIES_RANGE[1])
+        self._log_cache_spin.setSingleStep(1000)
+        current_val = (self._config_manager.max_log_entries
+                       if self._config_manager else 5000)
+        self._log_cache_spin.setValue(current_val)
+        self._log_cache_spin.valueChanged.connect(self._on_log_cache_changed)
+        spin_row.addWidget(self._log_cache_spin, 1)
+
+        log_layout.addLayout(spin_row)
+        self._layout.addWidget(log_widget)
+        self._log_settings_widget = log_widget
+
+    def _on_log_cache_changed(self, value):
+        if self._config_manager:
+            self._config_manager.max_log_entries = value
+
     def _build_status_bar(self):
         self._status_bar = QWidget()
         status_layout = QHBoxLayout(self._status_bar)
@@ -420,9 +469,13 @@ class SettingsPanel(QWidget):
 
     def _update_status(self):
         if self._mode == 0:
-            active = self._virtual_manager.isActive if self._virtual_manager else False
-            self._status_label.setText("已就绪 Ready" if active else "未启动 Inactive")
-            color = "#00d4aa" if active else "#8899aa"
+            if self._virtual_manager and not self._virtual_manager.socatAvailable:
+                self._status_label.setText("socat 未安装")
+                color = "#f44747"
+            else:
+                active = self._virtual_manager.isActive if self._virtual_manager else False
+                self._status_label.setText("已就绪 Ready" if active else "未启动 Inactive")
+                color = "#00d4aa" if active else "#8899aa"
         else:
             connected = self._serial_manager.isOpen if self._serial_manager else False
             self._status_label.setText("已连接 Connected" if connected else "未连接 Disconnected")
@@ -431,11 +484,14 @@ class SettingsPanel(QWidget):
 
     def _update_pin_states(self):
         if self._serial_manager and self._serial_manager.isOpen:
-            self._pin_bar.set_states(
-                self._serial_manager.dtr, self._serial_manager.rts,
-                self._serial_manager.cts, self._serial_manager.dsr,
-                self._serial_manager.dcd, self._serial_manager.ri
-            )
+            try:
+                self._pin_bar.set_states(
+                    self._serial_manager.dtr, self._serial_manager.rts,
+                    self._serial_manager.cts, self._serial_manager.dsr,
+                    self._serial_manager.dcd, self._serial_manager.ri
+                )
+            except OSError:
+                pass
 
     def _on_profile_changed(self, name):
         if self._config_manager and name and name != self._config_manager.current_profile:

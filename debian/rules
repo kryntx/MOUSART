@@ -1,4 +1,13 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --with python3
+
+override_dh_auto_install:
+	mkdir -p debian/mouserial/usr/lib/python3/dist-packages
+	cp -r mousart debian/mouserial/usr/lib/python3/dist-packages/
+	chmod 755 debian/mouserial/usr/lib/python3/dist-packages/mousart/__main__.py
+	mkdir -p debian/mouserial/usr/bin
+	ln -sf /usr/lib/python3/dist-packages/mousart/__main__.py debian/mouserial/usr/bin/mousart
+	mkdir -p debian/mouserial/usr/share/applications
+	cp MOUSART.desktop debian/mouserial/usr/share/applications/

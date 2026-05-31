@@ -89,6 +89,56 @@ class LogFileManager(QObject):
     def exportToTxt(self, file_path: str, log_entries: list) -> bool:
         return self.saveLogToFile(file_path, log_entries, False)
 
+    @pyqtSlot(str, list, result=bool)
+    def exportToHex(self, file_path: str, log_entries: list) -> bool:
+        """Export log entries as HEX text file with metadata header."""
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(f"MOUSART HEX Export - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("=" * 60 + "\n\n")
+                for entry in log_entries:
+                    if isinstance(entry, dict):
+                        time_str = entry.get("logTime", "")
+                        log_type = entry.get("logType", "")
+                        data = entry.get("logData", "")
+                        direction = {"RX": "<<", "TX": ">>"}.get(log_type, "  ")
+                        # Convert text to hex representation
+                        hex_str = " ".join(f"{ord(c):02X}" for c in data[:128])
+                        if len(data) > 128:
+                            hex_str += " ..."
+                        f.write(f"[{time_str}] {direction} {hex_str}\n")
+            return True
+        except Exception as e:
+            self.error_occurred.emit(f"无法保存文件: {e}")
+            return False
+
+    @pyqtSlot(str, list, str, str, result=bool)
+    def exportWithMeta(self, file_path: str, log_entries: list,
+                       port_info: str = "", baud_rate: str = "") -> bool:
+        """Export with metadata header (port info, baud rate, timestamp)."""
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(f"MOUSART Log Export\n")
+                f.write(f"导出时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                if port_info:
+                    f.write(f"串口: {port_info}\n")
+                if baud_rate:
+                    f.write(f"波特率: {baud_rate}\n")
+                f.write(f"条目数: {len(log_entries)}\n")
+                f.write("=" * 60 + "\n\n")
+                for entry in log_entries:
+                    if isinstance(entry, dict):
+                        time_str = entry.get("logTime", "")
+                        log_type = entry.get("logType", "")
+                        data = entry.get("logData", "")
+                        prefix = {"RX": "<< RX: ", "TX": ">> TX: ", "ERR": "!! ERR: ",
+                                  "INFO": "i  INFO: ", "SYS": "#  SYS: "}.get(log_type, "   ")
+                        f.write(f"[{time_str}] {prefix}{data}\n")
+            return True
+        except Exception as e:
+            self.error_occurred.emit(f"无法保存文件: {e}")
+            return False
+
     @pyqtSlot(str)
     def startRecording(self, directory: str = ""):
         if self._is_recording:
@@ -174,7 +224,7 @@ class LogFileManager(QObject):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         return self.getSaveFilePath(
             f"mousart_log_{ts}.txt",
-            "Text files (*.txt);;CSV files (*.csv);;All files (*)")
+            "Text files (*.txt);;CSV files (*.csv);;HEX files (*.hex);;All files (*)")
 
     @pyqtSlot(result=str)
     def getSendFilePath(self) -> str:
